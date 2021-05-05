@@ -4,7 +4,7 @@
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <Name>bitly_analog</Name>
     <RootNamespace>bitly_analog</RootNamespace>
-    <InterpreterId>MSBuild|DjangoDRF_env|$(MSBuildProjectFullPath)</InterpreterId>
+    <InterpreterId>MSBuild|DjangoDRF_env1|$(MSBuildProjectFullPath)</InterpreterId>
     <TestFramework>unittest</TestFramework>
   </PropertyGroup>
   <PropertyGroup>
@@ -94,8 +94,8 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Interpreter Include="..\..\..\..\_virtualenvs\DjangoDRF_env\">
-      <Id>DjangoDRF_env</Id>
+    <Interpreter Include="..\..\..\_virtualenvs\DjangoDRF_env\">
+      <Id>DjangoDRF_env1</Id>
       <Version>3.7</Version>
       <Description>DjangoDRF_env (Python 3.7 (64-bit))</Description>
       <InterpreterPath>Scripts\python.exe</InterpreterPath>

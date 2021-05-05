@@ -18,7 +18,7 @@ class Url(models.Model):
     full = models.URLField('Оригинальный URL')
     short = models.CharField('Короткая cсылка', max_length=100)
     # time_start = models.DateTimeField('Дата и время начала действия правила')     
-    time_end = models.DateTimeField('Дата и время окончания действия правила')     
+    time_end = models.DateField('Дата окончания действия правила')     
     # ttl = models.DurationField('Период действия правила')
 
     def __str__(self):

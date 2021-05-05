@@ -15,13 +15,13 @@ class Mainform(forms.ModelForm):
         fields = '__all__'
         widgets = {
             'url': forms.URLInput(attrs={'class':'form-control'}),
-            'domain': forms.TextInput(attrs={'class':'form-control', 'disabled': 'disabled'}),
+            'domain': forms.TextInput(attrs={'class':'form-control', 'disable': 'disable'}),
             'subpart': forms.TextInput(attrs={'class':'form-control'}),
             'time_end': forms.DateInput(format=('%d.%m.%Y'), attrs={'class':'form-control'}),
         }
 
-    domain = forms.CharField(label='Домен')
-    subpart = forms.CharField(label='Субдомен')
+    domain = forms.CharField(label='Домен', widget=forms.TextInput)
+    subpart = forms.CharField(label='Субдомен', widget=forms.TextInput)
 
 
 

@@ -6,15 +6,22 @@ from datetime import datetime
 from django.shortcuts import render
 from django.http import HttpRequest
 
+from app.models import Url 
+from app.forms import Mainform
+
+TITLE = 'Сервис коротких ссылок'
+
 def home(request):
     """Renders the home page."""
+    global TITLE
     assert isinstance(request, HttpRequest)
+    mainform = Mainform()
+
     return render(
-        request,
-        'app/index.html',
+        request, 'app/index.html',
         {
-            'title':'Home Page',
-            'year':datetime.now().year,
+            'mainform': mainform,
+            'title': TITLE, 'year': datetime.now().year,
         }
     )
 

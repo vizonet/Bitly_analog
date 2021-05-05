@@ -4,8 +4,10 @@
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <Name>bitly_analog</Name>
     <RootNamespace>bitly_analog</RootNamespace>
-    <InterpreterId>MSBuild|DjangoDRF_env1|$(MSBuildProjectFullPath)</InterpreterId>
+    <InterpreterId>MSBuild|DjangoDRF_env|$(MSBuildProjectFullPath)</InterpreterId>
     <TestFramework>unittest</TestFramework>
+    <IsWindowsApplication>False</IsWindowsApplication>
+    <WebBrowserPort>63000</WebBrowserPort>
   </PropertyGroup>
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -22,6 +24,8 @@
     <DjangoSettingsModule>bitly_analog.settings</DjangoSettingsModule>
     <OutputPath>.</OutputPath>
     <SuppressCollectPythonCloudServiceFiles>true</SuppressCollectPythonCloudServiceFiles>
+    <PythonRunWebServerCommandType />
+    <PythonDebugWebServerCommandType />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -94,8 +98,8 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Interpreter Include="..\..\..\_virtualenvs\DjangoDRF_env\">
-      <Id>DjangoDRF_env1</Id>
+    <Interpreter Include="..\..\..\..\_virtualenvs\DjangoDRF_env\">
+      <Id>DjangoDRF_env</Id>
       <Version>3.7</Version>
       <Description>DjangoDRF_env (Python 3.7 (64-bit))</Description>
       <InterpreterPath>Scripts\python.exe</InterpreterPath>

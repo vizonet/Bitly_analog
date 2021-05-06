@@ -25,6 +25,7 @@ def home(request):
         }
     )
 
+'''
 def contact(request):
     """Renders the contact page."""
     assert isinstance(request, HttpRequest)
@@ -50,3 +51,4 @@ def about(request):
             'year':datetime.now().year,
         }
     )
+'''

@@ -13,18 +13,17 @@ class Mainform(forms.ModelForm):
     class Meta:
         model = Url
         fields = '__all__'
+        exclude = ['short']
         widgets = {
-            'url': forms.URLInput(attrs={'class':'form-control'}),
-            'domain': forms.TextInput(attrs={'class':'form-control', 'disable': 'disable'}),
-            'subpart': forms.TextInput(attrs={'class':'form-control'}),
-            'time_end': forms.DateInput(format=('%d.%m.%Y'), attrs={'class':'form-control'}),
+            'full': forms.URLInput(attrs={'class': 'form-control'}),
+            'date_end': forms.DateInput(format=('%d.%m.%Y'), attrs={'class': 'form-control', 'placeholder': 'дд.мм.гггг'}),
         }
 
-    domain = forms.CharField(label='Домен', widget=forms.TextInput)
-    subpart = forms.CharField(label='Субдомен', widget=forms.TextInput)
+    domain = forms.CharField(label='Домен', widget=forms.TextInput(attrs={'class':' form-control', 'readonly': 'True'}))
+    subpart = forms.CharField(label='Субдомен', widget=forms.TextInput(attrs={'class': 'form-control'}))
 
 
-
+'''
 class BootstrapAuthenticationForm(AuthenticationForm):
     """Authentication form which uses boostrap CSS."""
     username = forms.CharField(max_length=254,
@@ -35,3 +34,4 @@ class BootstrapAuthenticationForm(AuthenticationForm):
                                widget=forms.PasswordInput({
                                    'class': 'form-control',
                                    'placeholder':'Password'}))
+'''

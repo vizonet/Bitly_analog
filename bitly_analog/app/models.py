@@ -16,9 +16,9 @@ class Url(models.Model):
     global STOP_STR
 
     full = models.URLField('Оригинальный URL')
+    date_end = models.DateField('Дата удаления правила')     
     short = models.CharField('Короткая cсылка', max_length=100)
     # time_start = models.DateTimeField('Дата и время начала действия правила')     
-    time_end = models.DateField('Дата окончания действия правила')     
     # ttl = models.DurationField('Период действия правила')
 
     def __str__(self):

@@ -25,6 +25,25 @@ def home(request):
         }
     )
 
+def check_subpart(request, sub_domain=None):
+    ''' Проверка на уникальность извлеченного из запроса субдомена в БД. 
+        Возвращает JSON-объект {'subpart_unique': <Boolean: true/false>}, как результат проверки по БД,
+        либо {'error': 'error'} при пустом параметре в запросе.  
+    '''
+    assert isinstance(request, HttpRequest)
+    result = {}
+    # Извлечение и проверка параметра запроса
+    sub_domain = request.GET.get('subpart') if 'subpart' in request.GET else None
+
+    # параметр запроса не пустой -> установка результата проверки значения по БД 
+    if sub_domain is not None:
+        result = { 'subpart_unique': False if Url.objects.filter(subpart=sub_domain).exist() else True }
+    # параметр запроса пустой -> сообщение об ошибке       
+    elif sub_domain == '':
+        result = {'error': 'Ошибка: не указано значение субдомена!'} 
+
+    return json.dumps(result)
+
 '''
 def contact(request):
     """Renders the contact page."""

@@ -2,6 +2,7 @@
 
 {% block content %}
 {% load staticfiles %}
+<script src="{% static 'app/scripts/fetch_request.js' %}"></script>
 <script src="{% static 'app/scripts/utils.js' %}"></script>
 
 <style>
@@ -42,7 +43,7 @@
         <label>Короткая ссылка:</label>
         <div class="input-group btm-sp">
             <span class="input-group-addon">
-                {{mainform.domain.as_p}}/
+                {{mainform.domain.as_p}}<b>/</b>
             </span>
             {{mainform.subpart}}
         </div>

@@ -35,14 +35,12 @@ def check_subpart(request, sub_domain=None):
     '''
     assert isinstance(request, HttpRequest)
     
-    result = {}
-    # Извлечение и проверка параметра запроса
-    sub_domain = request.GET.get('subpart') if 'subpart' in request.GET else None
+    result = {} # словарь callback-ответа 
 
     # параметр запроса не пустой -> установка результата проверки значения по БД 
     if sub_domain is not None:
         result = { 
-            'subpart_unique': False if Url.objects.filter(subpart=sub_domain, owner_set=get_owner(request)).exist() else True, 
+            'subpart_unique_flag': False if Url.objects.filter(subpart=sub_domain, owner_set=get_owner(request)).exist() else True, 
             'session_key': request.session['sessoin_key'], # для проверки в JS
         }
     # параметр запроса пустой -> сообщение об ошибке       

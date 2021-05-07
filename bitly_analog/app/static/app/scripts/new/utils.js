@@ -8,21 +8,21 @@ let link,       // поле полной ссылки
     errors;     // блок сообщений об ошибках
 
 // Установка обработки по событию загрузки DOM-дерева
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener('DOMContentLoaded', function () {
     // Cвязь с полями формы
     link = document.getElementById('id_link');
     domain = document.getElementById('id_domain');
     subpart = document.getElementById('id_subpart');
     errors = document.getElementById('errors');
 
-    // установка обработчика по событию ввода данных в поле полной ссылки
-    link.addEventListener('change', let_short());
+    // обработчик смены значения поле полной ссылки
+    link.addEventListener('change', handler);
 
-    // установка обработчика по событию ввода данных в поле субдомена
-    subpart.addEventListener('change', let_short());
+    // обработчик смены значения в поле субдомена
+    subpart.addEventListener('change', handler);
 })
 
-function let_short() {
+let handler = function let_short() {
     /* Ajax GET-запрос с параметром полной ссылки. 
      * Возвращает JSON-обдъект строковых значений домена и субдомена {'domain': <domain>, 'subpart': <subpart>}. 
      * */
@@ -36,7 +36,7 @@ function let_short() {
 
     // извлечение домена
     // let re = /https?:\/\/(?:[-\w]+\.)?([-\w]+)\.\w+(?:\.\w+)?\/?.*/i
-    let domain_str = url['hostname'].replace('www', '');
+    let domain_str = url['hostname'].replace('www.', '');
     domain.value = domain_str;
 
     // извлечение субдомена
@@ -46,15 +46,19 @@ function let_short() {
     subpart_str = subpart.value;
 
     // GET-запрос для проверки уникальности субдомена в БД
-    if (link.value && subpart_str && subpart_str !== '') {
-        let path = '/app/check_subpart/' + subpart_str + '/';
-        fetch_get(path)
-            .then(result =>
-                alert('Ответ сервера! ' + result)
-            )
-    } else {
-        errors.innerHTML = 'Не установлен параметр субдомена!';
+    if (link.value) {
+        if (subpart_str && subpart_str !== '') {
+            let path = '/app/check_subpart/' + subpart_str + '/';
+            fetch_get(path)
+                .then(result =>
+                    alert('Ответ сервера: ' + result)
+                )
+        } else {
+            errors.innerHTML = 'Не установлен параметр субдомена!';
+        }
     }
+
+    /*
     // POST-запрос для записи объектов ссылки в БД 
     data = {
         'url': link.value,
@@ -62,7 +66,6 @@ function let_short() {
         'subpart': subpart_str,
     }
 
-    /*
     fetch_post('url_ajax')
         .then(
             // формирование таблицы

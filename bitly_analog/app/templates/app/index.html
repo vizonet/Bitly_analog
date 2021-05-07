@@ -2,13 +2,13 @@
 
 {% block content %}
 {% load staticfiles %}
-<script src="{% static 'app/scripts/fetch_request.js' %}"></script>
-<script src="{% static 'app/scripts/utils.js' %}"></script>
+<script src="{% static 'app/scripts/new/fetch_request.js' %}"></script>
+<script src="{% static 'app/scripts/new/utils.js' %}"></script>
 
 <style>
     /* нижний отступ */
     .btm-sp { 
-        margin-bottom: 1em;
+        margin-bottom: 2em;
     }
 
     /* стиль ячеек таблицы */
@@ -24,40 +24,62 @@
 </div>
 
 <!-- секция с формой ввода -->
-<section>
+<section class="row">
     <h2 class="btm-sp">Задайте правило сокращения:</h2>
     <!-- форма ввода -->
     <form id="mainform" method="POST" class="form-group">{%csrf_token %}
-        <!-- поле оригинальной ссылки 'full' -->
+        <!-- поле оригинальной ссылки 'link' -->
         <div class="btm-sp">
-            {{mainform.full.label_tag}}
+            <h4>{{mainform.link.label_tag}}</h4>
             <div class="input-group">
                 <span class="input-group-addon">
                     <b>http(s)://</b> 
                 </span>
-                {{mainform.full}}
+                {{mainform.link}}
             </div>
         </div>
 
         <!-- поля короткой ссылки 'domain' и 'subpart' -->
-        <label>Короткая ссылка:</label>
-        <div class="input-group btm-sp">
-            <span class="input-group-addon">
-                {{mainform.domain.as_p}}<b>/</b>
-            </span>
-            {{mainform.subpart}}
+        <div class="col-xs-12 btm-sp" {#style="border: 1px solid lightgrey;"#}>
+            <h4><b>Короткая ссылка:</b></h4>
+            <div class="row">
+                <div class="col-xs-12 col-md-2">
+                    <div class="input-group">
+                        {{mainform.domain.label_tag}}
+                        {{mainform.domain}}
+                    </div>
+                </div>
+                <div class="row col-xs-12 col-md-1">
+                    <div class="col-xs-12"> <!-- блок с пустой меткой поля -->
+                        <label>&emsp;<br/></label> 
+                    </div> 
+                    <span class="form-control" style="text-align: center;" disabled><b>/</b></span> <!-- разделитель ссылки - слэш -->
+                </div>
+                <div class="col-xs-12 col-md-2">
+                    {{mainform.subpart.label_tag}}
+                    {{mainform.subpart}}                     
+                </div>
+                
+                <!-- блок сообщений об ошибках -->
+                <div class="col-xs-12 col-md-7">
+                    <div class="col-xs-12"> <!-- блок с пустой меткой поля -->
+                        <label>&emsp;<br/></label> 
+                    </div>
+                    <div id="errors" style="color: red;"></div>
+                </div>
+                
+            </div>
         </div>
 
         <!-- поле даты удаления правила -->
         <div class="btm-sp">
-            {{mainform.date_end.label_tag}}
-            {{mainform.date_end}}
+            {{mainform.expire_date.label_tag}}
+            {{mainform.expire_date}}
         </div>
 
         <!-- form.submit -->
         <div class="col-xs-12">
-            <div class="col-xs-10"><!-- пустой блок --></div>
-            <div><button type ="submit" class="col-xs-2 btn btn-primary">Сохранить</button></div>
+            <div class="col-xs-12 col-md-offset-10"><button type ="submit" class="col-xs-2 btn btn-primary">Сохранить</button></div>
         </div>
     </form>
 </section>

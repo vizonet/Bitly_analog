@@ -13,14 +13,14 @@ class Mainform(forms.ModelForm):
     class Meta:
         model = Url
         fields = '__all__'
-        exclude = ['short']
+        exclude = ['short', 'str_limit']
         widgets = {
-            'full': forms.URLInput(attrs={'class': 'form-control'}),
-            'date_end': forms.DateInput(format=('%d.%m.%Y'), attrs={'class': 'form-control', 'placeholder': 'дд.мм.гггг'}),
+            'link': forms.URLInput(attrs={'class': 'form-control'}),
+            'expire_date': forms.DateInput(format=('%d.%m.%Y'), attrs={'class': 'form-control', 'placeholder': 'дд.мм.гггг'}),
+            'subpart': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
     domain = forms.CharField(label='Домен', widget=forms.TextInput(attrs={'class':' form-control', 'readonly': 'True'}))
-    subpart = forms.CharField(label='Субдомен', widget=forms.TextInput(attrs={'class': 'form-control'}))
 
 
 '''

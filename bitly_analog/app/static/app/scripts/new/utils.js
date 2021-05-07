@@ -1,61 +1,69 @@
-/* Набор функций для манипулирования частями ссылок */
+/* РќР°Р±РѕСЂ С„СѓРЅРєС†РёР№ РґР»СЏ РјР°РЅРёРїСѓР»РёСЂРѕРІР°РЅРёСЏ С‡Р°СЃС‚СЏРјРё СЃСЃС‹Р»РѕРє */
 
-let full,   // поле полной ссылки
-    domain,     // поле домена
-    subpart;    // поле субдомена
+let link,       // РїРѕР»Рµ РїРѕР»РЅРѕР№ СЃСЃС‹Р»РєРё
+    domain,     // РїРѕР»Рµ РґРѕРјРµРЅР°
+    subpart,    // РїРѕР»Рµ СЃСѓР±РґРѕРјРµРЅР°
+    errors;     // Р±Р»РѕРє СЃРѕРѕР±С‰РµРЅРёР№ РѕР± РѕС€РёР±РєР°С…
+
+// РЈСЃС‚Р°РЅРѕРІРєР° РѕР±СЂР°Р±РѕС‚РєРё РїРѕ СЃРѕР±С‹С‚РёСЋ Р·Р°РіСЂСѓР·РєРё DOM-РґРµСЂРµРІР°
+document.addEventListener("DOMContentLoaded", function () {
+    // CРІСЏР·СЊ СЃ РїРѕР»СЏРјРё С„РѕСЂРјС‹
+    link = document.getElementById('id_link');
+    domain = document.getElementById('id_domain');
+    subpart = document.getElementById('id_subpart');
+    errors = document.getElementById('errors');
+
+    // СѓСЃС‚Р°РЅРѕРІРєР° РѕР±СЂР°Р±РѕС‚С‡РёРєР° РїРѕ СЃРѕР±С‹С‚РёСЋ РІРІРѕРґР° РґР°РЅРЅС‹С… РІ РїРѕР»Рµ РїРѕР»РЅРѕР№ СЃСЃС‹Р»РєРё
+    link.addEventListener('change', let_short());
+
+    // СѓСЃС‚Р°РЅРѕРІРєР° РѕР±СЂР°Р±РѕС‚С‡РёРєР° РїРѕ СЃРѕР±С‹С‚РёСЋ РІРІРѕРґР° РґР°РЅРЅС‹С… РІ РїРѕР»Рµ СЃСѓР±РґРѕРјРµРЅР°
+    subpart.addEventListener('change', let_short());
+})
 
 function let_short() {
-    /* Ajax GET-запрос с параметром полной ссылки. 
-     * Возвращает JSON-обдъект строковых значений домена и субдомена {'domain': <domain>, 'subpart': <subpart>}. 
+    /* Ajax GET-Р·Р°РїСЂРѕСЃ СЃ РїР°СЂР°РјРµС‚СЂРѕРј РїРѕР»РЅРѕР№ СЃСЃС‹Р»РєРё. 
+     * Р’РѕР·РІСЂР°С‰Р°РµС‚ JSON-РѕР±РґСЉРµРєС‚ СЃС‚СЂРѕРєРѕРІС‹С… Р·РЅР°С‡РµРЅРёР№ РґРѕРјРµРЅР° Рё СЃСѓР±РґРѕРјРµРЅР° {'domain': <domain>, 'subpart': <subpart>}. 
      * */
 
-    // DOM-элемент ссылки со значением поля  
+    // DOM-СЌР»РµРјРµРЅС‚ СЃСЃС‹Р»РєРё СЃРѕ Р·РЅР°С‡РµРЅРёРµРј РїРѕР»СЏ  
     let url = document.createElement('a');
-    url.href = full.value;
+    url.href = link.value;
 
-    // Получение частей ссылки по ключам из стандартного набора элемента 'a' - ['href','protocol','host','hostname','port','pathname','search','hash']
+    // РџРѕР»СѓС‡РµРЅРёРµ С‡Р°СЃС‚РµР№ СЃСЃС‹Р»РєРё РїРѕ РєР»СЋС‡Р°Рј РёР· СЃС‚Р°РЅРґР°СЂС‚РЅРѕРіРѕ РЅР°Р±РѕСЂР° СЌР»РµРјРµРЅС‚Р° 'a' - ['href','protocol','host','hostname','port','pathname','search','hash']
 
-    // извлечение домена
+    // РёР·РІР»РµС‡РµРЅРёРµ РґРѕРјРµРЅР°
     // let re = /https?:\/\/(?:[-\w]+\.)?([-\w]+)\.\w+(?:\.\w+)?\/?.*/i
     let domain_str = url['hostname'].replace('www', '');
     domain.value = domain_str;
 
-    // извлечение субдомена
+    // РёР·РІР»РµС‡РµРЅРёРµ СЃСѓР±РґРѕРјРµРЅР°
     let re = /[^\/]+/ig                                                     
-    let subpart_str = url['pathname'].match(re)[0];
-    subpart.value = subpart_str;
+    let subpart_arr = url['pathname'].match(re);
+    subpart.value = (subpart_arr !== null) ? subpart_arr[0] : ''; // РїСѓСЃС‚Р°СЏ СЃС‚СЂРѕРєР° РїСЂРё РЅРµРєРѕСЂСЂРµРєС‚РЅРѕР№ СЃСЃС‹Р»РєРё 
+    subpart_str = subpart.value;
 
-
-    // GET-запрос для проверки уникальности субдомена в БД
-    let path = 'check_subpart/' + subpart_str;
-    fetch_get(path)
-        .then(
-            
-        )
-
-    // POST-запрос для записи объектов ссылки в БД 
+    // GET-Р·Р°РїСЂРѕСЃ РґР»СЏ РїСЂРѕРІРµСЂРєРё СѓРЅРёРєР°Р»СЊРЅРѕСЃС‚Рё СЃСѓР±РґРѕРјРµРЅР° РІ Р‘Р”
+    if (link.value && subpart_str && subpart_str !== '') {
+        let path = '/app/check_subpart/' + subpart_str + '/';
+        fetch_get(path)
+            .then(result =>
+                alert('РћС‚РІРµС‚ СЃРµСЂРІРµСЂР°! ' + result)
+            )
+    } else {
+        errors.innerHTML = 'РќРµ СѓСЃС‚Р°РЅРѕРІР»РµРЅ РїР°СЂР°РјРµС‚СЂ СЃСѓР±РґРѕРјРµРЅР°!';
+    }
+    // POST-Р·Р°РїСЂРѕСЃ РґР»СЏ Р·Р°РїРёСЃРё РѕР±СЉРµРєС‚РѕРІ СЃСЃС‹Р»РєРё РІ Р‘Р” 
     data = {
-        'url': full.value,
+        'url': link.value,
         'domain': domain_str,
         'subpart': subpart_str,
     }
 
+    /*
     fetch_post('url_ajax')
         .then(
-            // отправка запроса на таблицу
+            // С„РѕСЂРјРёСЂРѕРІР°РЅРёРµ С‚Р°Р±Р»РёС†С‹
         )
+        */
 }
 
-// Установка обработки по событию загрузки DOM-дерева
-document.addEventListener("DOMContentLoaded", function () {
-    // Cвязь с полями формы
-    full = document.getElementById('id_full');
-    domain = document.getElementById('id_domain');
-    subpart = document.getElementById('id_subpart');
-
-    // установка обработчика по событию ввода данных в поле полной ссылки
-    full.addEventListener('input', let_short());
-    
-    // установка обработчика по событию ввода данных в поле субдомена
-    subpart.addEventListener('input', let_short()); 
-})

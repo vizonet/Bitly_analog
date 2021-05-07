@@ -4,8 +4,9 @@ Definition of urls for bitly_analog.
 
 from datetime import datetime
 from django.urls import path
-from django.contrib import admin
-from django.contrib.auth.views import LoginView, LogoutView
+# from django.contrib import admin
+# from django.contrib.auth.views import LoginView, LogoutView
+from django.conf.urls import include
 from app import forms, views
 
 

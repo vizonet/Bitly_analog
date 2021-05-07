@@ -5,18 +5,6 @@
 <script src="{% static 'app/scripts/new/fetch_request.js' %}"></script>
 <script src="{% static 'app/scripts/new/utils.js' %}"></script>
 
-<style>
-    /* нижний отступ */
-    .btm-sp { 
-        margin-bottom: 2em;
-    }
-
-    /* стиль ячеек таблицы */
-    table td[name='date'], th, tfoot { 
-        text-align: center;   
-    }
-</style> 
-
 <div class="jumbotron" style="padding: 1.5em;">
     <h1>Сервис коротких ссылок</h1>
     <h3>Для получения сокращённой ссылки введите оригинальный URL.</h3>
@@ -24,10 +12,11 @@
 </div>
 
 <!-- секция с формой ввода -->
-<section class="row">
-    <h2 class="btm-sp">Задайте правило сокращения:</h2>
+<section>
     <!-- форма ввода -->
-    <form id="mainform" method="POST" class="form-group">{%csrf_token %}
+    <form id="mainform" method="POST" class="form-group">
+        {%csrf_token %}
+        <h2 class="btm-sp">Задайте правило ссылки:</h2>
         <!-- поле оригинальной ссылки 'link' -->
         <div class="btm-sp">
             <h4>{{mainform.link.label_tag}}</h4>
@@ -40,21 +29,22 @@
         </div>
 
         <!-- поля короткой ссылки 'domain' и 'subpart' -->
-        <div class="col-xs-12 btm-sp" {#style="border: 1px solid lightgrey;"#}>
+        <div class="btm-sp" {#style="border: 1px solid lightgrey;"#}>
             <h4><b>Короткая ссылка:</b></h4>
-            <div class="row">
+            <div class="row" style="padding-left: 0;">
+                <!-- domain -->
                 <div class="col-xs-12 col-md-2">
-                    <div class="input-group">
-                        {{mainform.domain.label_tag}}
-                        {{mainform.domain}}
-                    </div>
+                    {{mainform.domain.label_tag}}
+                    {{mainform.domain}}
                 </div>
+                <!-- разделитель-слэш -->
                 <div class="row col-xs-12 col-md-1">
                     <div class="col-xs-12"> <!-- блок с пустой меткой поля -->
                         <label>&emsp;<br/></label> 
                     </div> 
-                    <span class="form-control" style="text-align: center;" disabled><b>/</b></span> <!-- разделитель ссылки - слэш -->
+                    <span class="form-control" style="text-align: center;"><b>/</b></span> 
                 </div>
+                <!-- subpart -->
                 <div class="col-xs-12 col-md-2">
                     {{mainform.subpart.label_tag}}
                     {{mainform.subpart}}                     
@@ -77,9 +67,11 @@
             {{mainform.expire_date}}
         </div>
 
-        <!-- form.submit -->
-        <div class="col-xs-12">
-            <div class="col-xs-12 col-md-offset-10"><button type ="submit" class="col-xs-2 btn btn-primary">Сохранить</button></div>
+        <!-- кнопка form.submit -->
+        <div class="row">
+            <div class="col-xs-12 i-right">
+                <button type="submit" class="btn btn-primary col-xs-2">Сохранить</button>
+            </div>
         </div>
     </form>
 </section>

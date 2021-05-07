@@ -15,7 +15,7 @@ class Mainform(forms.ModelForm):
         fields = '__all__'
         exclude = ['short', 'str_limit']
         widgets = {
-            'link': forms.URLInput(attrs={'class': 'form-control'}),
+            'link': forms.URLInput(attrs={'class': 'form-control' }),
             'expire_date': forms.DateInput(format=('%d.%m.%Y'), attrs={'class': 'form-control', 'placeholder': 'дд.мм.гггг'}),
             'subpart': forms.TextInput(attrs={'class': 'form-control'}),
         }

@@ -8,6 +8,22 @@
     <link rel="stylesheet" type="text/css" href="{% static 'app/content/bootstrap.min.css' %}" />
     <link rel="stylesheet" type="text/css" href="{% static 'app/content/site.css' %}" />
     <script src="{% static 'app/scripts/modernizr-2.6.2.js' %}"></script>
+    <style>
+        /* Локальные стили */
+        /* нижний отступ */
+        .btm-sp { 
+            margin-bottom: 2em;
+        }
+        /* стиль ячеек таблицы */
+        table td[name='date'], th, tfoot { 
+            text-align: center;   
+        }
+        /* Правое выравние элементов */
+        .i-right {
+            display: flex;
+            justify-content: flex-end;
+        }
+    </style> 
 </head>
 
 <body>
@@ -19,7 +35,7 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a href="/" class="navbar-brand">BIT.LY analogous app</a>
+                <a href="/" class="navbar-brand">BIT-LY analogous app</a>
             </div>
 
             {%comment%}
@@ -44,7 +60,9 @@
 
     <footer class="navbar navbar-inverse navbar-fixed-bottom">
         <div class="container">
-            <a href="https://github.com/vizonet/bitly_analog" class="navbar-brand">&copy; {{ year }} - Repository of Django Test Application on Github</a>
+            <a href="https://github.com/vizonet/bitly_analog" class="navbar-brand">
+                &copy; {{ year }} -  Test Application Repository on Github
+            </a>
         </div>
     </footer>
 

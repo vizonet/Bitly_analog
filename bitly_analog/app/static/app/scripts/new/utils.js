@@ -1,5 +1,7 @@
 /* Набор функций для манипулирования частями ссылок */
 
+const def_link = 'https://';
+
 let link,       // поле полной ссылки
     domain,     // поле домена
     subpart,    // поле субдомена
@@ -25,11 +27,12 @@ function let_short() {
      * Возвращает JSON-обдъект строковых значений домена и субдомена {'domain': <domain>, 'subpart': <subpart>}. 
      * */
 
+    // Получение частей ссылки по ключам из стандартного набора свойств tag-элемента 'a' - 
+    // - ['href', 'protocol', 'host', 'hostname', 'port', 'pathname', 'search', 'hash']
+
     // DOM-элемент ссылки со значением поля  
     let url = document.createElement('a');
-    url.href = link.value;
-
-    // Получение частей ссылки по ключам из стандартного набора элемента 'a' - ['href','protocol','host','hostname','port','pathname','search','hash']
+    url.href = (link.value) ? link.value : def_link;
 
     // извлечение домена
     // let re = /https?:\/\/(?:[-\w]+\.)?([-\w]+)\.\w+(?:\.\w+)?\/?.*/i

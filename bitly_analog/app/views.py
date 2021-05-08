@@ -4,7 +4,7 @@ Definition of views.
 
 import json
 from datetime import datetime, timedelta
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, Http404
 from django.http import HttpRequest, HttpResponse
 
 from app.models import Session, Owner, Url, Collection 
@@ -59,8 +59,12 @@ def home(request):
 
 def redirect_to(request, rule_id):
     ''' Перенаправление на ресурс по ссылке правила. '''
-    to = Url.objects.filter(id=Collection.objects.filter(id=rule_id).first()).first() # объект правила, соответствующий короткой ссылке
-    return redirect(to.link)
+    try:
+        url = Url.objects.get(id = rule_id)  # объект правила, соответствующий короткой ссылке
+    except Url.DoesNotExist:
+        raise Http404('В модели Url нет объекта с номером ' + str(rule_id))
+    else:
+        return redirect(url.link)               # пренаправление по ссылке правила
 
 
 def ajax_check_subpart(request, sub_domain=None):

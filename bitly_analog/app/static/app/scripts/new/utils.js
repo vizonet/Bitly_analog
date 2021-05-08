@@ -41,7 +41,8 @@ function let_short(event) {
     */
     // DOM-элемент ссылки со значением поля  
     let url = document.createElement('a');
-    url.href = (link.value) ? link.value : def_link;
+    // присоединение 'def_link' для корректного определения domain = url['hostname']
+    url.href = (link.value) ? (link.value.includes(def_link)) ? link.value : def_link + link.value : def_link;
 
     // очистка блока ошибок
     if (link.value === '' || subpart === '') errors.innerHTML = ''; 

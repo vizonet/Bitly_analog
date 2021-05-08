@@ -3,42 +3,55 @@ Definition of views.
 """
 
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.shortcuts import render
 from django.http import HttpRequest, HttpResponse
 
-from app.models import Session, Owner, Url 
+from app.models import Session, Owner, Url, Collection 
 from app.forms import Mainform
 
 
 def home(request):
     """Renders the home page."""
     assert isinstance(request, HttpRequest)
-    
-    mainform = Mainform(request.POST or None)
+
+    days_expire = 1 # срок жизни правила (сутки)
+    default_data = {'expire_date': datetime.now().date() + timedelta(days=days_expire)}  # данные для начальной формы 
+    mainform = Mainform(request.POST or default_data)
 
     # контекст HTML-страницы
     context = {
         'mainform': mainform,
         'title': 'Сервис коротких ссылок', 'year': datetime.now().year,
+        'savemsg': '', 
+        'errors': {},  # ошибки валидации формы и логики создания правил сокращения. Формат: 'errors': { key: [ error ] }
     }
 
     if request.method == 'POST':
         # проверка формы
         if mainform.is_valid():         
-            url = mainform.save(commit=False)                                           # инициализация объекта Url
-            url.short = '{}/{}'.format(mainform.cleaned_data['domain'], url.subpart)    # формирование короткой ссылки                     
-            url.save()                                                                  # сохранение формы и запись объекта в БД
-            Owner(session=get_owner(request).session, url=url).save()                   # запись правила в БД-коллекцию пользователя
+            url = mainform.save(commit=False)                                               # инициализация объекта Url
 
+            # проверка субдомена, запись правила и формирование сообщений  
+            if not is_subpart_exists(request, url.subpart):
+                url.short = '{}/{}'.format(mainform.cleaned_data['domain'], url.subpart)    # формирование короткой ссылки                     
+                url.save()                                                                  # сохранение формы и запись объекта в БД
+                Collection.objects.create(owner=get_owner(request), url=url)                # создание нового правила в БД-коллекцию пользователя
+                mainform = Mainform(default_data)
+                context.update({
+                    'savemsg': 'Правило сохранено. {}'.format(url),
+                })                
+            else:
+                mainform = Mainform(request.POST)
+                context['errors'].update({
+                    'Субдомен': ['Найден дубликат! Измените текущее значение.' ],
+                })    
+                
             context.update({
-                'mainform': Mainform(), # пустая форма
-                'newUrl': 'Правило сохранено. {}'.format(url),
+                'mainform': mainform,  # начальный набор параметров либо POST-данные при ошибках
             })
         else:
-            context.update({
-                'errors': mainform.errors, # ошибки формы
-            })
+            context['errors'].update(mainform.errors)   # ошибки формы
 
     return render(request, 'app/index.html', context)
 
@@ -49,38 +62,35 @@ def ajax_check_subpart(request, sub_domain=None):
         либо {'error': 'error'} при пустом параметре в запросе.  
     '''
     assert isinstance(request, HttpRequest)
-    
     result = {} # словарь callback-ответа 
 
     # параметр запроса не пустой -> установка результата проверки значения по БД 
     if sub_domain: 
         result = { 
             'session_key': request.session.session_key,                     # для проверки в JS
-            'is_subpart_unique': is_subpart_unique(request, sub_domain),    # уникален ли заданный субдомен
+            'is_subpart_exists': is_subpart_exists(request, sub_domain),    # существует ли заданный субдомен
         }
     # сообщение об ошибке
     else:
         result = {
             'error': 'Ошибка: ' + 'не указано значение субдомена!' if sub_domain == '' else 'отсутствует значение субдомена в запроосе!'
         } 
-
     return HttpResponse(json.dumps(result))
 
 
 # ----- Дополнительные функции
 
 def get_owner(request):
-    ''' Возвращает объект анонимного пользователя, установленного по ключу сессии из запроса. '''
-
+    ''' Возвращает объект анонимного пользователя, установленного по ключу сессии на основе запроса. '''
     # создание сессии нового пользователя
     if not request.session.exists(request.session.session_key):
-        request.session.create()
-     
-    return Owner.objects.get_or_create(session = Owner.objects.get(session = session_key=request.session.session_key))[0]
+        request.session.create()   
+    return Owner.objects.get_or_create(session = Session.objects.get(session_key = request.session.session_key))[0]   # Owner из кортежа (object, create)
 
-def is_subpart_unique(request, sub_domain):
-    ''' Проверка на уникальность субдомена. Возвращает Boolean значение. '''
-    return not Url.objects.filter(subpart=sub_domain, owner=get_owner(request)).exists()
+
+def is_subpart_exists(request, sub_domain):
+    ''' Проверка на уникальность субдомена. Возвращает Boolean: True, если есть совпадения, иначе False. '''
+    return Url.objects.filter(subpart=sub_domain).exists()
 
 '''
 def contact(request):

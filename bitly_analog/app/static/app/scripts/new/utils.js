@@ -1,65 +1,86 @@
 /* Набор функций для манипулирования частями ссылок */
 
-const def_link = 'https://';
+const def_link = 'https://',            // префикс ссылки 
+    exists_key = 'is_subpart_exists';   // имя ключа Ajax-callback-ответа 
 
-let link,       // поле полной ссылки
-    domain,     // поле домена
-    subpart,    // поле субдомена
-    //saveform,   // блок сообщения о новом правиле в БД
-    errors;     // блок сообщений об ошибках
 
-// Установка обработки по событию загрузки DOM-дерева
+let link,           // поле полной ссылки
+    domain,         // поле домена
+    subpart,        // поле субдомена
+    errors,         // блок сообщений об ошибках
+    savemsg;        // блок сообщения о новом правиле в БД
+
+// Инициализация после загрузки DOM-дерева
 document.addEventListener('DOMContentLoaded', function () {
     // Cвязь с полями формы
     link = document.getElementById('id_link');
     domain = document.getElementById('id_domain');
     subpart = document.getElementById('id_subpart');
-    //saveform = document.getElementById('saveform');
+
+    // связь с блоками сообщений
     errors = document.getElementById('errors');
+    savemsg = document.getElementById('savemsg');
 
-    // обработчик смены значения поле полной ссылки
-    link.addEventListener('change', handler);
-
-    // обработчик смены значения в поле субдомена
-    subpart.addEventListener('change', handler);
+    // обработчики 
+    link.addEventListener('input', event => { // смена значения поле полной ссылки
+        let_short(event);
+    });
+    subpart.addEventListener('input', event => { // смена значения в поле субдомена
+        let_short(event);
+    });
 })
 
-let handler = function let_short() {
+function let_short(event) {
     /* Ajax GET-запрос с параметром полной ссылки. 
      * Возвращает JSON-обдъект строковых значений домена и субдомена {'domain': <domain>, 'subpart': <subpart>}. 
      * */
+    savemsg.innerHTML = ''; // очистка блока сообщений
 
-    // Получение частей ссылки по ключам из стандартного набора свойств tag-элемента 'a' - 
-    // - ['href', 'protocol', 'host', 'hostname', 'port', 'pathname', 'search', 'hash']
-
+    /* Получение частей ссылки по ключам из стандартного набора свойств tag-элемента 'a' -
+       - ['href', 'protocol', 'host', 'hostname', 'port', 'pathname', 'search', 'hash']
+    */
     // DOM-элемент ссылки со значением поля  
     let url = document.createElement('a');
     url.href = (link.value) ? link.value : def_link;
 
+    // очистка блока ошибок
+    if (link.value === '' || subpart === '') errors.innerHTML = ''; 
+
     // извлечение домена
     // let re = /https?:\/\/(?:[-\w]+\.)?([-\w]+)\.\w+(?:\.\w+)?\/?.*/i
-    let domain_str = url['hostname'].replace('www.', '');
-    domain.value = domain_str;
+    domain.value = url['hostname'].replace('www.', '');
 
-    // извлечение субдомена
-    let re = /[^\/]+/ig                                                     
-    let subpart_arr = url['pathname'].match(re);
-    subpart.value = (subpart_arr !== null) ? subpart_arr[0] : ''; // пустая строка при некорректной ссылки 
-    subpart_str = subpart.value;
+    // извлечение субдомена при обновлении полной ссылки
+    if (event.target != subpart) {
+        let re = /[^\/]+/ig
+        let subpart_arr = url['pathname'].match(re);
+        subpart.value = (subpart_arr !== null) ? subpart_arr[0] : ''; // пустая строка при некорректной ссылке 
+    }
 
     // GET-запрос для проверки уникальности субдомена в БД
     if (link.value) {
-        if (subpart_str && subpart_str !== '') {
-            let path = '/ajax_check_subpart/' + subpart_str + '/';
+        if (subpart.value !== '') {
+            let path = '/ajax_check_subpart/' + subpart.value + '/';
             fetch_get(path)
                 .then(result => {
-                    // формирование сообщение об уникальности субдомена
-                    let msg = '';
-                    for (key of Object.keys(result)) msg += key + ': ' + result[key] + ',\n';
-                    alert('Ответ сервера:\n' + msg.slice(0, msg.length - 2)); 
+                    // вывод сообщений проверки субдомена
+                    let msg = 'Субдомен "' + subpart.value + '" '; // начало сообщения
+                    if (result.hasOwnProperty(exists_key)) { // проверка callback-ключа в ответе сервера
+                        if (result[exists_key]) {
+                            errors.innerHTML = msg + 'занят, измените текущее значение!';
+                        } else {
+                            errors.innerHTML = '<span style="color: green;">' + msg + 'свободен!</span>';
+                        }
+                    } else {
+                        errors.innerHTML = 'Неожидаемый ответ сервера!';
+                        // вывод всего словаря 'result' в консоль
+                        console.log(errors.innerText);
+                        for (key of Object.keys(result))
+                            console.log(key + ': ' + result[key]);
+                    }
                 })
         } else {
-            errors.innerHTML = 'Не установлен параметр субдомена!';
+            errors.innerHTML = 'Установите имя субдомена!';
         }
     }
 
@@ -75,6 +96,5 @@ let handler = function let_short() {
         .then(
             // формирование таблицы
         )
-        */
+    */
 }
-

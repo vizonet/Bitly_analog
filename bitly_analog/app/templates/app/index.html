@@ -83,11 +83,13 @@
             {{mainform.expire_date}}
         </div>
 
-        <!-- кнопка form.submit -->
         <div class="row">
-            <div id="saveform" class="col-xs-12 col-md-10" style="color: blue;">
-                {% if newUrl %}<h4>{{newUrl}}</h4>{% endif %}
+            <!-- блок сообщений результата сохранения правила -->
+            <div id="savemsg" class="col-xs-12 col-md-10" style="color: blue;">
+                {% if savemsg %}<h4>{{savemsg}}</h4>{% endif %}
             </div>
+            
+            <!-- кнопка form.submit -->
             <div class="col-xs-12 col-md-2">
                 <button type="submit" class="btn btn-primary col-xs-12">Сохранить</button>
             </div>

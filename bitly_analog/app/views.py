@@ -4,7 +4,7 @@ Definition of views.
 
 import json
 from datetime import datetime, timedelta
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponse
 
 from app.models import Session, Owner, Url, Collection 
@@ -21,6 +21,7 @@ def home(request):
 
     # контекст HTML-страницы
     context = {
+        'rules': Collection.objects.filter(owner = get_owner(request)),     # выборка правил пользователя для таблицы
         'mainform': mainform,
         'title': 'Сервис коротких ссылок', 'year': datetime.now().year,
         'savemsg': '', 
@@ -52,8 +53,14 @@ def home(request):
             })
         else:
             context['errors'].update(mainform.errors)   # ошибки формы
-
+    # --- end of POST
     return render(request, 'app/index.html', context)
+
+
+def redirect_to(request, rule_id):
+    ''' Перенаправление на ресурс по ссылке правила. '''
+    to = Url.objects.filter(id=Collection.objects.filter(id=rule_id).first()).first() # объект правила, соответствующий короткой ссылке
+    return redirect(to.link)
 
 
 def ajax_check_subpart(request, sub_domain=None):

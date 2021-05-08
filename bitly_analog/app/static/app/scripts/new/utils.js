@@ -5,6 +5,7 @@ const def_link = 'https://';
 let link,       // поле полной ссылки
     domain,     // поле домена
     subpart,    // поле субдомена
+    //saveform,   // блок сообщения о новом правиле в БД
     errors;     // блок сообщений об ошибках
 
 // Установка обработки по событию загрузки DOM-дерева
@@ -13,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function () {
     link = document.getElementById('id_link');
     domain = document.getElementById('id_domain');
     subpart = document.getElementById('id_subpart');
+    //saveform = document.getElementById('saveform');
     errors = document.getElementById('errors');
 
     // обработчик смены значения поле полной ссылки
@@ -48,11 +50,14 @@ let handler = function let_short() {
     // GET-запрос для проверки уникальности субдомена в БД
     if (link.value) {
         if (subpart_str && subpart_str !== '') {
-            let path = '/app/check_subpart/' + subpart_str + '/';
+            let path = '/ajax_check_subpart/' + subpart_str + '/';
             fetch_get(path)
-                .then(result =>
-                    alert('Ответ сервера: ' + result)
-                )
+                .then(result => {
+                    // формирование сообщение об уникальности субдомена
+                    let msg = '';
+                    for (key of Object.keys(result)) msg += key + ': ' + result[key] + ',\n';
+                    alert('Ответ сервера:\n' + msg.slice(0, msg.length - 2)); 
+                })
         } else {
             errors.innerHTML = 'Не установлен параметр субдомена!';
         }

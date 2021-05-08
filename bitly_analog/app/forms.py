@@ -19,7 +19,7 @@ class Mainform(forms.ModelForm):
             'expire_date': forms.DateInput(format=('%d.%m.%Y'), attrs={'class': 'form-control', 'placeholder': 'дд.мм.гггг'}),
             'subpart': forms.TextInput(attrs={'class': 'form-control'}),
         }
-
+    # дополнительное поле для формирования поля 'short' 
     domain = forms.CharField(label='Домен', widget=forms.TextInput(attrs={'class':' form-control', 'readonly': 'True'}))
 
 

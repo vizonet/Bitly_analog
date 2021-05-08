@@ -13,7 +13,7 @@ from app import forms, views
 urlpatterns = [
     # from Django
     path('', views.home, name='home'),
-    path('app/', include('app.urls')),
+    path('', include('app.urls')),
 ]
 
 

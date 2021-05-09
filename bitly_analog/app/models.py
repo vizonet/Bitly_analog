@@ -10,7 +10,7 @@ from django.contrib.sessions.models import Session
 class Url(models.Model):
     ''' Модель БД. Хранит параметры правил сокращения ссылок. '''    
     link = models.URLField('Оригинальная ссылка')
-    short = models.CharField('Короткая cсылка', max_length=100)
+    short = models.CharField('Алиас', max_length=100)
     subpart = models.CharField('Субдомен', max_length=40)
     expire_date = models.DateField('Дата удаления правила')     
     # ttl = models.DurationField('Период действия правила')
@@ -19,7 +19,7 @@ class Url(models.Model):
 
     def __str__(self):
         ''' Строковое представление модели. ''' 
-        return 'Короткий URL: ' + self.short + ', оригинал: ' + self.link[:self.str_limit] + (' ...' if len(self.link) > self.str_limit else '')
+        return 'Алиас: ' + self.short + '\t, URL: ' + self.link[:self.str_limit] + (' ...' if len(self.link) > self.str_limit else '')
 
 
     def to_json(self):

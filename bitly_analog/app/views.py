@@ -1,81 +1,95 @@
 """
 Definition of views.
 """
-
 import json
+import time
+import threading
 from datetime import datetime, timedelta
 from django.shortcuts import render, redirect, get_object_or_404, Http404
 from django.http import HttpRequest, HttpResponse
 from django.core.paginator import Paginator
 
 from app.models import Session, Owner, Url, Collection 
-from app.forms import Mainform
+from app.forms import Mainform, is_subpart_exists
 
+# ----- Периодические задачи
 
-def home(request, page_default=1, onpage=3, days_expire=1):
-    ''' Главная страница серсвиса. '''
+def clean_rules():                                                                      
+    ''' Очистка в БД записей правил модели 'Url' с наступившей датой удаления 'expire_date'. 
+        Вызывается асинхронно в отдельном потоке
+    '''  
+    delay = 24*60*60  # одни сутки                                                      # время в секундах между вызовами функции
+    # очистка правил в БД 
+    Url.objects.filter(expire_date=datetime.now().date()).delete() 
+    # очистка правил в кеше
+    time.sleep(delay)                                                                   # задержка
+     
 
-    # Дополнительные входные параметры:
-    #page_default    - начальная страница пагинации списка правил пользователя
-    #onpage          - количество строк списка правил в таблице  
-    #days_expire     - число дней жизни правила (прибавляется к текущей дате для записи даты удаления)
-    
+def scheduller(task): 
+    ''' Запуск асинхронных задач. '''
+    thread = threading.Thread(target=task)                                              # инициализация потока
+    thread.start()
+    print('Запущен асинхронный поток зачачи ' + task.__name__ + '\n')                   # запуск потока
+
+scheduller(clean_rules)                                                                 # запуск задачи clean_rules
+
+# ----- Представления HTML-страниц 
+
+def home(request, page_number=1, onpage=3, days_expire=1):
+    ''' Главная страница серсвиса. 
+        # Входные параметры:
+        # page_number       - начальная страница пагинации списка правил пользователя
+        # onpage            - количество строк списка правил в таблице  
+        # days_expire       - число дней жизни правила (прибавляется к текущей дате для записи даты удаления)
+    '''
     assert isinstance(request, HttpRequest)
 
-    # срок жизни правила (сутки)
-    default_data = {'expire_date': datetime.now().date() + timedelta(days=days_expire)}  # данные для начальной формы 
-    mainform = Mainform(request.POST or default_data)
+    default_data = {'expire_date': datetime.now().date() + timedelta(days=days_expire)} # данные для начальной формы # срок жизни правила (сутки)
+    savemsg = ''                                                                        # сообщение о записи правила в БД
+    mainform = Mainform(request.POST or default_data)                                   # HTML-форма правила модели Url
+    errors = {} # ошибки валидации формы и логики значений.                             # Формат: 'errors': { key: [ error ] }
 
-    # контекст HTML-страницы
-    context = {
-        'rules': Collection.objects.filter(owner = get_owner(request)),     # выборка правил пользователя для таблицы
-        'mainform': mainform,
-        'title': 'Сервис коротких ссылок', 'year': datetime.now().year,
-        'savemsg': '', 
-        'errors': {},  # ошибки валидации формы и логики создания правил сокращения. Формат: 'errors': { key: [ error ] }
-    }
-
+    # обработка и запись формы
     if request.method == 'POST':
-        # проверка формы
-        if mainform.is_valid():         
-            url = mainform.save(commit=False)                                               # инициализация объекта Url
-
-        # проверка субдомена, запись правила и формирование сообщений  
-        #if not is_subpart_exists(request, url.subpart):
+        if mainform.is_valid():                                                         # учтена проверка субдомена          
+            url = mainform.save(commit=False)                                           # инициализация объекта Url
+            # запись правила и формирование сообщений  
             url.short = '{}/{}'.format(mainform.cleaned_data['domain'], url.subpart)    # формирование короткой ссылки                     
             url.save()                                                                  # сохранение формы и запись объекта в БД
             Collection.objects.create(owner=get_owner(request), url=url)                # создание нового правила в БД-коллекцию пользователя
-            mainform = Mainform(default_data)
-            context.update({
-                'savemsg': 'Правило сохранено. {}'.format(url),
-            })                
-            '''
-            else:
-                mainform = Mainform(request.POST)
-                context['errors'].update({
-                    'Субдомен': ['Найден дубликат! Измените текущее значение.' ],
-                })    
-                
-            context.update({
-                'mainform': mainform,  # начальный набор параметров либо POST-данные при ошибках
-            }) 
-            '''
+            savemsg = '{}'.format(url)                                                  # из метода __str__ модели  
+            mainform = Mainform(default_data)                                           # чистая форма после записи предыдущих данных
         else:
-            context['errors'].update(mainform.errors)   # ошибки формы
+            errors = mainform.errors                                                    # ошибки формы
     # --- end of POST
 
-    # пагинация
-    owner=get_object_or_404(Owner, pk=get_owner(request).id) 
+    # Пагинация
     # выборка всех правил пользователя с сортирвкой по дате удаления
+    owner=get_object_or_404(Owner, pk=get_owner(request).id) 
     rules_list = Url.objects.filter(collection__in=Collection.objects.select_related('url').filter(owner=owner)).order_by('expire_date')
-    page_number = request.GET.get('page') or page_default
+    # установка номера страницы для текущего отображения
+    page_number = request.GET.get('page') or page_number
 
-    context.update({'page_obj':  paginate(rules_list, page_number, onpage)})
+    # контекст HTML-страницы
+    context = {
+        'title': 'Сервис коротких ссылок', 'year': datetime.now().year,                 # загололвок HTML-страницы 
+        'rules': Collection.objects.filter(owner = get_owner(request)),                 # выборка правил пользователя для таблицы
+        'mainform': mainform,
+        'savemsg': savemsg,
+        'errors': errors,
+        'page_obj':  paginate(rules_list, page_number, onpage),                         
+    }
     return render(request, 'app/index.html', context)
 
 
-def paginate(object_list, page_number=1, onpage=10):
-    ''' Пагинация объектов заданной модели. Возвращает сраницу списка - объект класса Paginator. '''
+
+def paginate(object_list=[], page_number=1, onpage=10):
+    ''' Пагинация объектов заданной модели. Возвращает сраницу списка - объект класса Paginator. 
+        # Входные параметры:
+        # object_list       - список объектов для разбиения на страницы
+        # page_number       - начальная страница пагинации списка правил пользователя
+        # onpage            - количество строк списка правил в таблице  
+    '''
     paginator = Paginator(object_list, onpage) 
     return paginator.get_page(page_number) 
 
@@ -115,20 +129,13 @@ def ajax_check_subpart(request, sub_domain=None):
 
 
 
-# ----- Дополнительные функции
+# ----- Дополнительный функционал
 
 def get_owner(request):
     ''' Возвращает объект анонимного пользователя, установленного по ключу сессии из запроса. '''
     if not request.session.exists(request.session.session_key): 
         request.session.create() # создание сессии нового пользователя  
     return Owner.objects.get_or_create(session = Session.objects.get(session_key = request.session.session_key))[0]   # Owner из кортежа (object, create)
-
-
-
-def is_subpart_exists(request, sub_domain):
-    ''' Проверка на уникальность субдомена. Возвращает Boolean: True, если есть совпадения, иначе False. '''
-    return Url.objects.filter(subpart=sub_domain).exists()
-
 
 
 '''

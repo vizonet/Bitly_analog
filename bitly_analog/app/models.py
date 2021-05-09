@@ -9,7 +9,8 @@ from django.contrib.sessions.models import Session
 
 class Owner(models.Model):
     ''' Модель БД. Хранит пользователей и их настройки на основе ключа сеанса Django. '''
-    session = models.ForeignKey(Session, on_delete=models.CASCADE)      # связь с таблицой сеансов Session
+    session = models.ForeignKey(Session, on_delete=models.CASCADE)                                       # связь с таблицой сеансов Session
+    url_ttl = models.PositiveSmallIntegerField('Время жизни правила (в сутках)', default=1)
     trows_on_page = models.PositiveSmallIntegerField('Число строк таблицы правил на странице', default=3)
 
     def __str__(self):

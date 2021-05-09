@@ -36,17 +36,16 @@ def scheduller(task):
 
 # ----- Представления HTML-страниц 
 
-def home(request, page_number=1, onpage=3, days_expire=1):
+def home(request, page_number=1, onpage=3):
     ''' Главная страница серсвиса. 
-        # Входные параметры:
+        # Аргументы:
         # page_number       - начальная страница пагинации списка правил пользователя
         # onpage            - количество строк списка правил в таблице  
-        # days_expire       - число дней жизни правила (прибавляется к текущей дате для записи даты удаления)
     '''
-    assert isinstance(request, HttpRequest)
+    assert isinstance(request, HttpRequest)                                             # проверка принадлежности объекта запроса к своему классу 
     owner=get_owner(request)                                                            # инициализация пользователя
-
-    default_data = {'expire_date': datetime.now().date() + timedelta(days=days_expire)} # данные для начальной формы # срок жизни правила (сутки)
+    # данные для начальной формы - срок жизни правила (в сутках)
+    default_data = {'expire_date': datetime.now().date() + timedelta(days=owner.url_ttl)} 
     savemsg = ''                                                                        # сообщение о записи правила в БД
     mainform = Mainform(request.POST or default_data)                                   # HTML-форма правила модели Url
     errors = {} # ошибки валидации формы и логики значений.                             # Формат: 'errors': { key: [ error ] }
@@ -62,7 +61,7 @@ def home(request, page_number=1, onpage=3, days_expire=1):
             savemsg = '{}'.format(url)                                                  # из метода __str__ модели  
             mainform = Mainform(default_data)                                           # чистая форма после записи предыдущих данных
         else:
-            errors = mainform.errors                                                    # ошибки формы
+            errors = mainform.errors                                                    # ошибки валидации формы
     # --- end of POST
 
     # Пагинация
@@ -86,7 +85,7 @@ def home(request, page_number=1, onpage=3, days_expire=1):
 
 def paginate(object_list=[], page_number=1, onpage=10):
     ''' Пагинация объектов заданной модели. Возвращает сраницу списка - объект класса Paginator. 
-        # Входные параметры:
+        # Аргументы:
         # object_list       - список объектов для разбиения на страницы
         # page_number       - начальная страница пагинации списка правил пользователя
         # onpage            - количество строк списка правил в таблице  
@@ -118,8 +117,7 @@ def ajax_check_subpart(request, sub_domain=None):
     # параметр запроса не пустой -> установка результата проверки значения по БД 
     if sub_domain: 
         result = { 
-            'session_key': request.session.session_key,                     # для проверки в JS
-            'is_subpart_exists': is_subpart_exists(request, sub_domain),    # существует ли заданный субдомен
+            'is_subpart_exists': is_subpart_exists(request, sub_domain),                # существует ли заданный субдомен
         }
     # сообщение об ошибке
     else:

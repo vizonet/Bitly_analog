@@ -16,9 +16,11 @@ class Url(models.Model):
     # ttl = models.DurationField('Период действия правила')
     str_limit = models.PositiveSmallIntegerField('Число первых символов отображения оригинального URL в методе __str__', default=40)
 
+
     def __str__(self):
         ''' Строковое представление модели. ''' 
         return 'Короткий URL: ' + self.short + ', оригинал: ' + self.link[:self.str_limit] + (' ...' if len(self.link) > self.str_limit else '')
+
 
     def to_json(self):
         ''' Сведения об объекте модели. '''

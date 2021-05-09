@@ -12,11 +12,17 @@ from app.models import Session, Owner, Url, Collection
 from app.forms import Mainform
 
 
-def home(request, page_default=1, onpage=3):
+def home(request, page_default=1, onpage=3, days_expire=1):
     ''' Главная страница серсвиса. '''
+
+    # Дополнительные входные параметры:
+    #page_default    - начальная страница пагинации списка правил пользователя
+    #onpage          - количество строк списка правил в таблице  
+    #days_expire     - число дней жизни правила (прибавляется к текущей дате для записи даты удаления)
+    
     assert isinstance(request, HttpRequest)
 
-    days_expire = 1 # срок жизни правила (сутки)
+    # срок жизни правила (сутки)
     default_data = {'expire_date': datetime.now().date() + timedelta(days=days_expire)}  # данные для начальной формы 
     mainform = Mainform(request.POST or default_data)
 
@@ -34,15 +40,16 @@ def home(request, page_default=1, onpage=3):
         if mainform.is_valid():         
             url = mainform.save(commit=False)                                               # инициализация объекта Url
 
-            # проверка субдомена, запись правила и формирование сообщений  
-            if not is_subpart_exists(request, url.subpart):
-                url.short = '{}/{}'.format(mainform.cleaned_data['domain'], url.subpart)    # формирование короткой ссылки                     
-                url.save()                                                                  # сохранение формы и запись объекта в БД
-                Collection.objects.create(owner=get_owner(request), url=url)                # создание нового правила в БД-коллекцию пользователя
-                mainform = Mainform(default_data)
-                context.update({
-                    'savemsg': 'Правило сохранено. {}'.format(url),
-                })                
+        # проверка субдомена, запись правила и формирование сообщений  
+        #if not is_subpart_exists(request, url.subpart):
+            url.short = '{}/{}'.format(mainform.cleaned_data['domain'], url.subpart)    # формирование короткой ссылки                     
+            url.save()                                                                  # сохранение формы и запись объекта в БД
+            Collection.objects.create(owner=get_owner(request), url=url)                # создание нового правила в БД-коллекцию пользователя
+            mainform = Mainform(default_data)
+            context.update({
+                'savemsg': 'Правило сохранено. {}'.format(url),
+            })                
+            '''
             else:
                 mainform = Mainform(request.POST)
                 context['errors'].update({
@@ -51,7 +58,8 @@ def home(request, page_default=1, onpage=3):
                 
             context.update({
                 'mainform': mainform,  # начальный набор параметров либо POST-данные при ошибках
-            })
+            }) 
+            '''
         else:
             context['errors'].update(mainform.errors)   # ошибки формы
     # --- end of POST

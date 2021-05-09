@@ -4,15 +4,16 @@ Definition of views.
 
 import json
 from datetime import datetime, timedelta
-from django.shortcuts import render, redirect, Http404
+from django.shortcuts import render, redirect, get_object_or_404, Http404
 from django.http import HttpRequest, HttpResponse
+from django.core.paginator import Paginator
 
 from app.models import Session, Owner, Url, Collection 
 from app.forms import Mainform
 
 
-def home(request):
-    """Renders the home page."""
+def home(request, page_default=1, onpage=3):
+    ''' Главная страница серсвиса. '''
     assert isinstance(request, HttpRequest)
 
     days_expire = 1 # срок жизни правила (сутки)
@@ -54,17 +55,33 @@ def home(request):
         else:
             context['errors'].update(mainform.errors)   # ошибки формы
     # --- end of POST
+
+    # пагинация
+    owner=get_object_or_404(Owner, pk=get_owner(request).id) 
+    # выборка всех правил пользователя с сортирвкой по дате удаления
+    rules_list = Url.objects.filter(collection__in=Collection.objects.select_related('url').filter(owner=owner)).order_by('expire_date')
+    page_number = request.GET.get('page') or page_default
+
+    context.update({'page_obj':  paginate(rules_list, page_number, onpage)})
     return render(request, 'app/index.html', context)
+
+
+def paginate(object_list, page_number=1, onpage=10):
+    ''' Пагинация объектов заданной модели. Возвращает сраницу списка - объект класса Paginator. '''
+    paginator = Paginator(object_list, onpage) 
+    return paginator.get_page(page_number) 
+
 
 
 def redirect_to(request, rule_id):
     ''' Перенаправление на ресурс по ссылке правила. '''
     try:
-        url = Url.objects.get(id = rule_id)  # объект правила, соответствующий короткой ссылке
+        url = Url.objects.get(id = rule_id)     # объект правила, соответствующий короткой ссылке
     except Url.DoesNotExist:
         raise Http404('В модели Url нет объекта с номером ' + str(rule_id))
     else:
         return redirect(url.link)               # пренаправление по ссылке правила
+
 
 
 def ajax_check_subpart(request, sub_domain=None):
@@ -89,19 +106,22 @@ def ajax_check_subpart(request, sub_domain=None):
     return HttpResponse(json.dumps(result))
 
 
+
 # ----- Дополнительные функции
 
 def get_owner(request):
-    ''' Возвращает объект анонимного пользователя, установленного по ключу сессии на основе запроса. '''
-    # создание сессии нового пользователя
-    if not request.session.exists(request.session.session_key):
-        request.session.create()   
+    ''' Возвращает объект анонимного пользователя, установленного по ключу сессии из запроса. '''
+    if not request.session.exists(request.session.session_key): 
+        request.session.create() # создание сессии нового пользователя  
     return Owner.objects.get_or_create(session = Session.objects.get(session_key = request.session.session_key))[0]   # Owner из кортежа (object, create)
+
 
 
 def is_subpart_exists(request, sub_domain):
     ''' Проверка на уникальность субдомена. Возвращает Boolean: True, если есть совпадения, иначе False. '''
     return Url.objects.filter(subpart=sub_domain).exists()
+
+
 
 '''
 def contact(request):

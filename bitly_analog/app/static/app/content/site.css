@@ -40,3 +40,34 @@ input[type="checkbox"].input-validation-error {
 .validation-summary-valid {
     display: none;
 }
+
+
+/* ---------- Стили приложения BIT-LY ---------- */
+
+/* Cтили таблицы */
+thead, tfoot {
+    font-size: larger; 
+    text-align: center;
+    font-weight: bold;
+    background: lightgrey;
+}
+
+td[name='date'], th {
+    text-align: center;
+}
+/* Внешие нижние отступы */
+.btm-sp {
+    margin-bottom: 1.25em;
+}
+/* Горизонтальное выравнивание элементов */
+.icenter, .iright {
+    display: flex;
+}
+
+.icenter {
+    justify-content: center;
+}
+
+.iright {
+    justify-content: flex-end;
+}

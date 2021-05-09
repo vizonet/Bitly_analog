@@ -67,6 +67,7 @@
   <ItemGroup>
     <Content Include="app\static\app\scripts\new\fetch_request.js" />
     <Content Include="app\static\app\scripts\new\utils.js" />
+    <Content Include="app\templates\app\paginate.html" />
     <Content Include="requirements.txt" />
     <Content Include="db.sqlite3" />
     <Content Include="app\static\app\content\bootstrap.css" />

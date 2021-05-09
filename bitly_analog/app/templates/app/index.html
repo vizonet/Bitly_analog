@@ -14,90 +14,100 @@
 <!-- секция с формой ввода -->
 <section>
     <!-- форма ввода -->
-    <form id="mainform" method="POST" class="form-group">
-        {%csrf_token %}
-        <h2 class="btm-sp">Задайте правило ссылки:</h2>
-        <!-- поле оригинальной ссылки 'link' -->
-        <div class="btm-sp">
-            <h4>{{mainform.link.label_tag}}</h4>
-            <div class="input-group">
-                <span class="input-group-addon">
-                    <b>URL:</b> 
-                </span>
-                {{mainform.link}}
+    <h2 style="margin-bottom: 1em;">Задайте правило ссылки:</h2>
+    <form id="mainform" method="POST" class="row form-group" style="display: flex;">{%csrf_token %}
+        <!-- блок полей формы -->
+        <fieldset class="col-xs-12 col-md-10">
+            <!-- поле оригинальной ссылки 'link' -->
+            <div class="btm-sp">
+                <h4>{{mainform.link.label_tag}}</h4>
+                <div class="input-group">
+                    <span class="input-group-addon">
+                        <b>URL:</b> 
+                    </span>
+                    {{mainform.link}}
+                </div>
             </div>
-        </div>
 
-        <!-- поля короткой ссылки 'domain' и 'subpart' -->
-        <div class="btm-sp" {#style="border: 1px solid lightgrey;"#}>
-            <h4><b>Короткая ссылка:</b></h4>
-            <div class="row" style="padding-left: 0;">
-                <!-- domain -->
-                <div class="col-xs-12 col-md-2">
-                    {{mainform.domain.label_tag}}
-                    {{mainform.domain}}
-                </div>
-                <!-- разделитель-слэш -->
-                <div class="row col-xs-12 col-md-1">
-                    <div class="col-xs-12"> <!-- блок с пустой меткой поля -->
-                        <label>&emsp;<br/></label> 
-                    </div> 
-                    <span class="form-control" style="text-align: center;"><b>/</b></span> 
-                </div>
-                <!-- subpart -->
-                <div class="col-xs-12 col-md-2">
-                    {{mainform.subpart.label_tag}}
-                    {{mainform.subpart}}                     
-                </div>
-                
-                <!-- блок сообщений об ошибках -->
-                <div class="col-xs-12 col-md-7">
-                    {% if not errors %}
+            <!-- поля короткой ссылки 'domain' и 'subpart' -->
+            <div class="btm-sp">
+                <h4><b>Короткая ссылка:</b></h4>
+                <div class="row" style="padding-left: 0;">
+                    <!-- domain -->
+                    <div class="col-xs-12 col-md-2">
+                        {{mainform.domain.label_tag}}
+                        {{mainform.domain}}
+                    </div>
+                    <!-- разделитель-слэш -->
+                    <div class="row col-xs-12 col-md-1">
                         <div class="col-xs-12"> <!-- блок с пустой меткой поля -->
                             <label>&emsp;<br/></label> 
-                        </div>
-                    {% endif %}
-                    <!-- сообщения об ошибках -->
-                    <div id="errors" style="color: red;">
-                        {% if errors %}
-                            <label>Ошибки сохранения формы:</label>
-                            <ul>
-                                {% for key, errList in errors.items %}
-                                    <li>Поле "<b>{{key}}</b>":</li>
-                                    <ol>
-                                        {% for err in errList %}
-                                            <li>{{err}}</li>
-                                        {% endfor %}
-                                    </ol>
-                                {% endfor %}
-                            </ul>
+                        </div> 
+                        <span class="form-control" style="text-align: center;"><b>/</b></span> 
+                    </div>
+                    <!-- subpart -->
+                    <div class="col-xs-12 col-md-2">
+                        {{mainform.subpart.label_tag}}
+                        {{mainform.subpart}}                     
+                    </div>
+                
+                    <!-- блок сообщений об ошибках -->
+                    <div class="col-xs-12 col-md-7">
+                        {% if not errors %}
+                            <div class="col-xs-12"> <!-- блок с пустой меткой поля -->
+                                <label>&emsp;<br/></label> 
+                            </div>
                         {% endif %}
+                        <!-- сообщения об ошибках -->
+                        <div id="errors" style="color: red;">
+                            {% if errors %}
+                                <label>Ошибки сохранения формы:</label>
+                                <ul>
+                                    {% for key, errList in errors.items %}
+                                        <li>Поле "<b>{{key}}</b>":</li>
+                                        <ol>
+                                            {% for err in errList %}
+                                                <li>{{err}}</li>
+                                            {% endfor %}
+                                        </ol>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- поле даты удаления правила -->
-        <div class="btm-sp">
-            {{mainform.expire_date.label_tag}}
-            {{mainform.expire_date}}
-        </div>
-
-        <div class="row">
-            <!-- блок сообщений результата сохранения правила -->
-            <div id="savemsg" class="col-xs-12 col-md-10" style="color: blue;">
-                {% if savemsg %}<h4>{{savemsg}}</h4>{% endif %}
+            <!-- поле даты удаления правила -->
+            <div class="btm-sp">
+                {{mainform.expire_date.label_tag}}
+                {{mainform.expire_date}}
             </div>
+        </fieldset> <!-- конец блока полей фолрмы -->
+
+        <fieldset class="col-xs-12 col-md-2" style="display: flex; align-items: flex-end;">
+            <div class="col-xs-12 btm-sp">
+                <!-- кнопка form.reset -->
+                <button type="reset" class="btn btn-lg btn-danger col-xs-12">Очистить</button>       
             
-            <!-- кнопка form.submit -->
-            <div class="col-xs-12 col-md-2">
-                <button type="submit" class="btn btn-primary col-xs-12">Сохранить</button>
+                <!-- кнопка form.submit -->
+                <button type="submit" 
+                        class="btn btn-lg btn-primary col-xs-12" 
+                        style="padding: 3em 0; margin-top: 3em;">
+                    Сохранить
+                </button>  
             </div>
-        </div>
+        </fieldset>
     </form>
 </section>
+    
+<section>
+    <div id="savemsg" style="width: 100%; color: blue;">
+        <!-- сообщение результатах сохранения правила -->
+        {% if savemsg %}<h4>{{savemsg}}</h4>{% endif %}
+    </div>
+</section>
 
-<!-- секция с таблицей действующих правил -->
 <section>
     <h2>
         {% if rules %}
@@ -107,21 +117,24 @@
         {% endif %}
     </h2>
     {% if rules %} 
+        <!-- ТАБЛИЦА ПРАВИЛ -->
         <div class="table-responsive">
             <table class="table table-striped table-bordered table-hover">
-                <thead>
+                <thead style="background: lightgrey;">
                     <tr><th>№</th><th width="45%">Оригинальный URL</th><th>Короткий вариант</th><th width="15%" name='date'>Дата удаления</th></tr>
                 </thead>      
-                <tfoot>
-                    <tr><td colspan="4">--- end of table ---</td></tr>
+                <tfoot style="background: lightgrey;">
+                    <!-- пагинация -->
+                    <tr><td colspan="4">{% include 'app/paginate.html' %}</td></tr>
                 </tfoot>      
                 <tbody>
-                    {% for rule in rules %}
-                        <tr><th>{{forloop.counter}}</th><td>{{rule.url.link}}</td><td><a href="{% url 'redirect_to' rule.url.id %}">{{rule.url.short}}</a></td><td name='date'>{{rule.url.expire_date}}</td></tr>
+                    {% for url in page_obj.object_list %}
+                        <tr><th>{{forloop.counter}}</th><td>{{url.link}}</td><td><a href="{% url 'redirect_to' url.id %}">{{url.short}}</a></td><td name='date'>{{url.expire_date}}</td></tr>
                     {% endfor %}
                 </tbody>      
             </table>
         </div>
+
     {% endif %}
 </section>
 

@@ -1,6 +1,6 @@
 /* Набор функций для манипулирования частями ссылок */
 
-const def_link = 'https://',            // префикс ссылки 
+const protocol = 'https://',            // префикс ссылки 
     exists_key = 'is_subpart_exists';   // имя ключа Ajax-callback-ответа 
 
 
@@ -21,14 +21,25 @@ document.addEventListener('DOMContentLoaded', function () {
     errors = document.getElementById('errors');
     savemsg = document.getElementById('savemsg');
 
-    // обработчики 
-    link.addEventListener('input', event => { // смена значения поле полной ссылки
+    /* ОБРАБОТЧИКИ */
+    // смена значения поле полной ссылки
+    link.addEventListener('input', event => { 
         let_short(event);
     });
-    subpart.addEventListener('input', event => { // смена значения в поле субдомена
+    // смена значения в поле субдомена
+    subpart.addEventListener('input', event => { 
         let_short(event);
+    });
+    // очистка формы и блока ошибок на элементе формы - кнопке 'reset'
+    document.getElementById('mainform').querySelector('button[type="reset"]').addEventListener('click', event => { // 
+        event.preventDefault(); // остановка цепи стандартных событий 
+        for (field of document.getElementById('mainform').querySelectorAll('input[id^="id_"]')) { // все поля 'input' кроме csrf-токена 
+            field.value = '';
+        }
+        errors.innerHTML = ''; // блок ошибок 
     });
 })
+
 
 function let_short(event) {
     /* Ajax GET-запрос с параметром полной ссылки. 
@@ -42,7 +53,7 @@ function let_short(event) {
     // DOM-элемент ссылки со значением поля  
     let url = document.createElement('a');
     // присоединение 'def_link' для корректного определения domain = url['hostname']
-    url.href = (link.value) ? (link.value.includes(def_link)) ? link.value : def_link + link.value : def_link;
+    url.href = (link.value) ? (link.value.includes(protocol)) ? link.value : protocol + link.value : protocol;
 
     // очистка блока ошибок
     if (link.value === '' || subpart === '') errors.innerHTML = ''; 
@@ -58,7 +69,7 @@ function let_short(event) {
         subpart.value = (subpart_arr !== null) ? subpart_arr[0] : ''; // пустая строка при некорректной ссылке 
     }
 
-    // GET-запрос для проверки уникальности субдомена в БД
+    // AJAX.GET-запрос для проверки уникальности субдомена в БД
     if (link.value) {
         if (subpart.value !== '') {
             let path = '/ajax_check_subpart/' + subpart.value + '/';
@@ -84,6 +95,7 @@ function let_short(event) {
             errors.innerHTML = 'Установите имя субдомена!';
         }
     }
+
 
     /*
     // POST-запрос для записи объектов ссылки в БД 

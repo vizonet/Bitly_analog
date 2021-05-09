@@ -6,14 +6,14 @@
 function fetch_get(url='') { 
 	/* GET AJAX-запрос */
 	return fetch(url)
-		.then(
-			response => {
-				return response.json()
-			}
-		) 
-		.catch(error => 
-			alert("--> Ошибка при AJAX-запросе из 'fetch_get': " + error)
-		)
+				.then(
+					response => {
+						return response.json()
+					}
+				) 
+				.catch(error => 
+					alert("--> Ошибка при AJAX-запросе из 'fetch_get': " + error)
+				)
 }
 
 function fetch_post(url='', data) {
@@ -29,12 +29,12 @@ function fetch_post(url='', data) {
 		body: JSON.stringify(data) // сериализация данных для тела запроса
 	});
 	return fetch(request) 
-		.then(
-			response => {
-				return response.json()
-			}
-		)
-		.catch(error =>
-			alert("--> Ошибка при AJAX-запросе из 'fetch_post': " + error)
-		)
+				.then(
+					response => {
+						return response.json()
+					}
+				)
+				.catch(error =>
+					alert("--> Ошибка при AJAX-запросе из 'fetch_post': " + error)
+				)
 }

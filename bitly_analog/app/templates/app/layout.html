@@ -8,17 +8,7 @@
     <link rel="stylesheet" type="text/css" href="{% static 'app/content/bootstrap.min.css' %}" />
     <link rel="stylesheet" type="text/css" href="{% static 'app/content/site.css' %}" />
     <script src="{% static 'app/scripts/modernizr-2.6.2.js' %}"></script>
-    <style>
-        /* Локальные стили */
-        /* нижний отступ */
-        .btm-sp { 
-            margin-bottom: 2em;
-        }
-        /* стиль ячеек таблицы */
-        table td[name='date'], th, tfoot { 
-            text-align: center;   
-        }
-    </style> 
+
 </head>
 
 <body>
@@ -47,7 +37,7 @@
         </div>
     </div>
 
-    <div class="container {#body-content#}">
+    <div class="container body-content">
         {% block content %}<!-- основной контент -->{% endblock %}
     </div>
 

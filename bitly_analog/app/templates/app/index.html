@@ -111,13 +111,13 @@
 
 <section>
     <h2>
-        {% if rules %}
-            Таблица действующих правил (всего {{rules.count}}):
+        {% if rules_query %}
+            Таблица действующих правил (<span style="color: blue">{{page_obj.object_list.count}} из {{rules_query.count}}</span>):
         {% else %}
             У Вас в коллекции пока нет правил сокращения...
         {% endif %}
     </h2>
-    {% if rules %} 
+    {% if page_obj.object_list %} 
         <!-- ТАБЛИЦА ПРАВИЛ -->
         <div class="table-responsive">
             <table class="table table-striped table-bordered table-hover">
@@ -129,8 +129,9 @@
                     <tr><td colspan="4">{% include 'app/paginate.html' %}</td></tr>
                 </tfoot>      
                 <tbody>
+                    <!-- страница списка правил -->
                     {% for url in page_obj.object_list %}
-                        <tr><th>{{forloop.counter}}</th><td>{{url.link}}</td><td><a href="{% url 'redirect_to' url.id %}">{{url.short}}</a></td><td name='date'>{{url.expire_date}}</td></tr>
+                        <tr><th>{{forloop.counter}}</th><td>{{url.link}}</td><td><a href="{% url 'redirect_to' url.id %}">{{url.alias}}</a></td><td name='date'>{{url.expire_date}}</td></tr>
                     {% endfor %}
                 </tbody>      
             </table>

@@ -16,22 +16,23 @@ from app.forms import Mainform, is_subpart_exists
 
 def clean_rules():                                                                      
     ''' Очистка в БД записей правил модели 'Url' с наступившей датой удаления 'expire_date'. 
-        Вызывается асинхронно в отдельном потоке
-    '''  
-    delay = 24*60*60  # одни сутки                                                      # время в секундах между вызовами функции
-    # очистка правил в БД 
-    Url.objects.filter(expire_date=datetime.now().date()).delete() 
-    # очистка правил в кеше
-    time.sleep(delay)                                                                   # задержка
+        Вызывается асинхронно в отдельном потоке.
+    '''
+    while True:
+        delay = 24*60*60  # одни сутки                                                  # время в секундах между вызовами функции
+        # очистка правил в БД 
+        Url.objects.filter(expire_date=datetime.now().date()).delete() 
+        # очистка правил в кеше
+        time.sleep(delay)                                                               # задержка
      
 
 def scheduller(task): 
     ''' Запуск асинхронных задач. '''
     thread = threading.Thread(target=task)                                              # инициализация потока
     thread.start()
-    print('Запущен асинхронный поток зачачи ' + task.__name__ + '\n')                   # запуск потока
+    print('Запущен асинхронный поток зачачи ' + task.__name__ + '\n')                   # запуск потока (сообщение в консоль сервера)
 
-scheduller(clean_rules)                                                                 # запуск задачи clean_rules
+# scheduller(clean_rules)                                                                 # запуск задачи clean_rules
 
 # ----- Представления HTML-страниц 
 
@@ -43,6 +44,7 @@ def home(request, page_number=1, onpage=3, days_expire=1):
         # days_expire       - число дней жизни правила (прибавляется к текущей дате для записи даты удаления)
     '''
     assert isinstance(request, HttpRequest)
+    owner=get_owner(request)                                                            # инициализация пользователя
 
     default_data = {'expire_date': datetime.now().date() + timedelta(days=days_expire)} # данные для начальной формы # срок жизни правила (сутки)
     savemsg = ''                                                                        # сообщение о записи правила в БД
@@ -53,9 +55,9 @@ def home(request, page_number=1, onpage=3, days_expire=1):
     if request.method == 'POST':
         if mainform.is_valid():                                                         # учтена проверка субдомена          
             url = mainform.save(commit=False)                                           # инициализация объекта Url
-            # запись правила и формирование сообщений  
-            url.short = '{}/{}'.format(mainform.cleaned_data['domain'], url.subpart)    # формирование короткой ссылки                     
-            url.save()                                                                  # сохранение формы и запись объекта в БД
+            url.alias = '{}/{}'.format(mainform.cleaned_data['domain'], url.subpart)    # формирование короткой ссылки 
+            url.owner = owner                                                           # добавление пользователя
+            url.save()                                                                  # сохранение формы - запись объекта правила в БД
             Collection.objects.create(owner=get_owner(request), url=url)                # создание нового правила в БД-коллекцию пользователя
             savemsg = '{}'.format(url)                                                  # из метода __str__ модели  
             mainform = Mainform(default_data)                                           # чистая форма после записи предыдущих данных
@@ -65,19 +67,18 @@ def home(request, page_number=1, onpage=3, days_expire=1):
 
     # Пагинация
     # выборка всех правил пользователя с сортирвкой по дате удаления
-    owner=get_object_or_404(Owner, pk=get_owner(request).id) 
-    rules_list = Url.objects.filter(collection__in=Collection.objects.select_related('url').filter(owner=owner)).order_by('expire_date')
+    rules_query = Url.objects.filter(collection__in=Collection.objects.select_related('url').filter(owner=owner)).order_by('expire_date')
     # установка номера страницы для текущего отображения
     page_number = request.GET.get('page') or page_number
 
     # контекст HTML-страницы
     context = {
         'title': 'Сервис коротких ссылок', 'year': datetime.now().year,                 # загололвок HTML-страницы 
-        'rules': Collection.objects.filter(owner = get_owner(request)),                 # выборка правил пользователя для таблицы
         'mainform': mainform,
         'savemsg': savemsg,
         'errors': errors,
-        'page_obj':  paginate(rules_list, page_number, onpage),                         
+        'rules_query': rules_query,                                                     # список всех правил пользователя
+        'page_obj': paginate(rules_query, page_number, owner.trows_on_page),            # разбивка на страницы
     }
     return render(request, 'app/index.html', context)
 
@@ -94,15 +95,15 @@ def paginate(object_list=[], page_number=1, onpage=10):
     return paginator.get_page(page_number) 
 
 
-
+  
 def redirect_to(request, rule_id):
     ''' Перенаправление на ресурс по ссылке правила. '''
     try:
-        url = Url.objects.get(id = rule_id)     # объект правила, соответствующий короткой ссылке
+        url = Url.objects.get(id = rule_id)                                             # объект правила, соответствующий короткой ссылке
     except Url.DoesNotExist:
         raise Http404('В модели Url нет объекта с номером ' + str(rule_id))
     else:
-        return redirect(url.link)               # пренаправление по ссылке правила
+        return redirect(url.link)                                                       # пренаправление по ссылке правила
 
 
 

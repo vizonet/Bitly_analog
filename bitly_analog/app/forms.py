@@ -4,6 +4,7 @@ Definition of forms.
 
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
+from django.utils.translation import gettext_lazy as _
 
 from app.models import Url
 
@@ -12,13 +13,13 @@ class Mainform(forms.ModelForm):
     class Meta:
         model = Url
         fields = '__all__'
-        exclude = ['short', 'str_limit']
+        exclude = ['alias', 'str_limit', 'owner']
         widgets = {
             'link': forms.URLInput(attrs={'class': 'form-control' }),
             'expire_date': forms.DateInput(format=('%d.%m.%Y'), attrs={'class': 'form-control', 'placeholder': 'дд.мм.гггг'}),
             'subpart': forms.TextInput(attrs={'class': 'form-control'}),
         }
-    # дополнительное поле для формирования поля 'short' 
+    # дополнительное поле для формирования поля 'alias' 
     domain = forms.CharField(label='Домен', widget=forms.TextInput(attrs={'class':' form-control', 'readonly': 'True'}))
 
     def clean(self):
@@ -29,7 +30,8 @@ class Mainform(forms.ModelForm):
         if Url.objects.filter(subpart=subpart).exists():  
             self.add_error('subpart', 'Найден дубликат субдомена! Измените текущее значение.')
 
-'''
+
+
 class BootstrapAuthenticationForm(AuthenticationForm):
     """Authentication form which uses boostrap CSS."""
     username = forms.CharField(max_length=254,
@@ -40,7 +42,8 @@ class BootstrapAuthenticationForm(AuthenticationForm):
                                widget=forms.PasswordInput({
                                    'class': 'form-control',
                                    'placeholder':'Password'}))
-'''
+
+
 
 # ----- Дополнительный функционал 
 

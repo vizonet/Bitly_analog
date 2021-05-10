@@ -10,16 +10,27 @@ from django.db import IntegrityError
 from django.core.paginator import Paginator
 from datetime import datetime, timedelta
 
-from app.models import Session, Owner, Url, Collection, Log 
+from app.models import Session, Owner, Url, Collection, Log
 from app.forms import Mainform
+
+# rest api, cache
+from rest_framework.decorators import api_view
+from rest_framework import status
+from rest_framework.response import Response
+from django.core.cache import cache
+from django.core.cache.backends.base import DEFAULT_TIMEOUT
+from django.conf import settings
+ 
 
 # ----- Глобальные переменные 
 DB_ERROR = 'Ошибка доступа к БД.'                                                       # ошибка при обращении к БД для записи лога
 UNKNOWN_NAME = 'UNKNOWN FUNCTION NAME'                                                  # ошибка установления процесса при записи лога 
+CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)                             # таймаут объектов кэша по умолчанию
 
 # ----- Общий функционал
 
-def loggin(owner, process, exec_msg):
+   
+def logger(owner, process, exec_msg):
     ''' Создание записи в таблице логирования Log. 
         Аргументы:
         owner    (Owner) -- объект пользователя 
@@ -70,8 +81,9 @@ def get_owner(request):
             msg = 'Создан новый пользователь с ключом сессии: ' + result[0].session.session_key,
     finally:
         if result[1] or msg:                                                            # создан новый пользователь
-            loggin(owner, get_fname(inspect.currentframe()), msg)                       # запись лога в БД  
+            logger(owner, get_fname(inspect.currentframe()), msg)                       # запись лога в БД  
     return result[0]    # объект Owner из кортежа (object, create)
+
 
 
 def get_fname(frame):
@@ -83,114 +95,8 @@ def get_fname(frame):
         fname = inspect.getframeinfo(frame).function                                     # имя фрейма/функции
     except:
         fname = UNKNOWN_NAME 
-        loggin(None, 'get_fname', 'Не удалось определить имя процесса.')
+        logger(None, 'get_fname', 'Не удалось определить имя процесса.')
     return fname                                                                        
-
-
-
-# ----- Периодические задачи
-
-def clean_urls(*args):                                                                      
-    ''' Очистка в БД записей правил модели 'Url' с наступившей датой удаления 'expire_date'. 
-        Вызывается асинхронно в отдельном потоке.
-    '''
-    msg = 'Периодическая задача: очистка в БД Url-объектов правил по текущую дату включительно. '
-    while True:
-        delay = 24*60*60  # одни сутки                                                  # время в секундах между вызовами функции
-        # очистка правил в БД и логирование
-        try: 
-            query = Url.objects.filter(expire_date__lte=datetime.now().date())          # выборка всех правил до текущей даты включительно
-        except NameError:
-            msg += DB_ERROR + 'Таблица Url не найдена.' 
-        else: 
-            ids = [url.id for url in query]
-            # сообщение в лог
-            msg += (args[0] if args else '' + 'Удалены правила ({}) с id : ' + str(len(ids)) + str(ids)) if query \
-                else 'Нет правил для удаления.' 
-            query.delete()                                                              # удаление правил с соответствующей датой
-        finally:
-            loggin(None, get_fname(inspect.currentframe()), msg)                        # запись лога в БД  
-        # очистка правил в кеше
-        time.sleep(delay)                                                               # останов задачи на период
-     
-
-def scheduller(task, *args):
-    ''' Выполняет запуск асинхронной задачи в потоке.
-        Аргументы:
-        task (str)      -- имя задачи/функции
-        args (tuple)    -- аргументы задачи task
-    '''
-    thread = threading.Thread(target=task, args=args)                                  # инициализация потока
-    try:
-        thread.start()
-    except:
-        msg = 'Не удалось запустить асинхроную задачу.' + task.__name__ 
-    else: 
-        msg = '--> В асинхронном потоке запущена задача ' + task.__name__ \
-                + ((': ' + args[0]) if args else '') + '\n'                            # сообщение в лог из аргументов 
-    loggin(None, get_fname(inspect.currentframe()), msg)                               # запись лога в БД  
-    print(msg)                                                                         # сообщение в консоль сервера
-
-
-# запуск задачи clean_rules
-scheduller(clean_urls, 'периодическая очистка URL-правил в БД')                                        
-
-
-
-# ----- Представления HTML-страниц 
-
-def home(request, page_number=1, onpage=3):
-    ''' Главная страница серсвиса. 
-        Аргументы:
-        request     (HttpRequest) -- объект HTTP-запроса
-        page_number (int)         -- начальная страница пагинации списка правил пользователя
-        onpage      (int)         -- количество строк списка правил в таблице  
-    '''
-    assert isinstance(request, HttpRequest)                                             # проверка принадлежности объекта запроса к своему классу 
-    owner = get_owner(request)                                                          # инициализация пользователя
-    process = get_fname(inspect.currentframe())                                         # имя текущей функции
-    
-    # данные для начальной формы - срок жизни правила (в сутках)
-    default_data = {'expire_date': datetime.now().date() + timedelta(days=owner.url_ttl)} 
-    savemsg = ''                                                                        # сообщение о записи правила в БД
-    mainform = Mainform(request.POST or default_data)                                   # HTML-форма правила модели Url
-    errors = {} # ошибки валидации формы и логики значений.                             # Формат: 'errors': { key: [ error ] }
-    msg = ''                                                                            # сообщение в лог            
-    # обработка и запись формы
-    if request.method == 'POST':
-        if mainform.is_valid():                                                         # учтена проверка субдомена          
-            url = mainform.save(commit=False)                                           # инициализация объекта Url
-            url.alias = '{}/{}'.format(mainform.cleaned_data['domain'], url.subpart)    # формирование короткой ссылки 
-            url.owner = owner                                                           # добавление пользователя
-            url.save()                                                                  # сохранение формы - запись объекта правила в БД
-            loggin(owner, process, 'Создан объект правила с id: ' + str(url.id))        # запись лога в БД 
-            
-            url_col = Collection.objects.create(owner=get_owner(request), url=url)      # создание нового правила в БД-коллекцию пользователя
-            loggin(owner, process, 
-                   'Создан объект коллекци правил с id: ' + str(url_col.id))            # запись лога в БД  
-            
-            savemsg = '{}'.format(url)                                                  # из метода __str__ модели  
-            mainform = Mainform(default_data)                                           # чистая форма после записи предыдущих данных
-        else:
-            errors = mainform.errors                                                    # ошибки валидации формы
-    # --- end of POST
-
-    # Пагинация
-    # выборка всех правил пользователя с сортирвкой по дате удаления
-    url_query = Url.objects.filter(collection__in = Collection.objects.select_related('url').filter(owner=owner)).order_by('expire_date')
-    # установка номера страницы для текущего отображения
-    page_number = request.GET.get('page') or page_number
-
-    # контекст HTML-страницы
-    context = {
-        'title': 'Сервис коротких ссылок', 'year': datetime.now().year,                 # загололвок HTML-страницы 
-        'mainform': mainform,
-        'savemsg': savemsg,
-        'errors': errors,
-        'url_query': url_query,                                                         # список всех правил пользователя
-        'page_obj': paginate(url_query, page_number, owner.trows_on_page),              # разбивка на страницы
-    }
-    return render(request, 'app/index.html', context)
 
 
 
@@ -245,6 +151,127 @@ def ajax_check_subpart(request, sub_domain=None):
         } 
     return HttpResponse(json.dumps(result))
 
+
+
+# ----- Периодические задачи
+
+def clean_urls(*args):                                                                      
+    ''' Очистка в БД записей правил модели 'Url' с наступившей датой удаления 'expire_date'. 
+        Вызывается асинхронно в отдельном потоке.
+    '''
+    msg = 'Периодическая задача: очистка в БД Url-объектов правил по текущую дату включительно. '
+    while True:
+        delay = 24*60*60  # одни сутки                                                  # время в секундах между вызовами функции
+        # очистка правил в БД и логирование
+        try: 
+            query = Url.objects.filter(expire_date__lte=datetime.now().date())          # выборка всех правил до текущей даты включительно
+        except NameError:
+            msg += DB_ERROR + 'Таблица Url не найдена.' 
+        else: 
+            ids = [url.id for url in query]
+            # сообщение в лог
+            msg = ('Удалены правила ({}) с id : ' + str(len(ids)) + str(ids)) if query \
+                else 'Нет правил для удаления.' + msg
+            query.delete()                                                              # удаление правил с соответствующей датой
+        finally:
+            logger(None, get_fname(inspect.currentframe()), msg)                        # запись лога в БД  
+        # очистка правил в кеше
+        time.sleep(delay)                                                               # останов задачи на период
+     
+
+def scheduller(task, *args):
+    ''' Выполняет запуск асинхронной задачи в потоке.
+        Аргументы:
+        task (str)      -- имя задачи/функции
+        args (tuple)    -- аргументы задачи task
+    '''
+    thread = threading.Thread(target=task, args=args)                                  # инициализация потока
+    try:
+        thread.start()
+    except:
+        msg = 'Не удалось запустить асинхроную задачу.' + task.__name__ 
+    else: 
+        msg = '--> В асинхронном потоке запущена задача ' + task.__name__ \
+                + ((': ' + args[0]) if args else '') + '\n'                            # сообщение в лог из аргументов 
+    logger(None, get_fname(inspect.currentframe()), msg)                               # запись лога в БД  
+    print(msg)                                                                         # сообщение в консоль сервера
+
+
+# запуск задачи clean_rules
+scheduller(clean_urls, 'периодическая очистка URL-правил в БД')                                        
+
+
+
+# ----- Представления HTML-страниц 
+
+def home(request, page_number=1, onpage=3):
+    ''' Главная страница серсвиса. 
+        Аргументы:
+        request     (HttpRequest) -- объект HTTP-запроса
+        page_number (int)         -- начальная страница пагинации списка правил пользователя
+        onpage      (int)         -- количество строк списка правил в таблице  
+    '''
+    assert isinstance(request, HttpRequest)                                             # проверка принадлежности объекта запроса к своему классу
+    url = None
+    owner = get_owner(request)                                                          # инициализация пользователя
+    process = get_fname(inspect.currentframe())                                         # имя текущей функции
+    
+    # данные для начальной формы - срок жизни правила (в сутках)
+    default_data = {'expire_date': datetime.now().date() + timedelta(days=owner.url_ttl)} 
+    savemsg = ''                                                                        # сообщение о записи правила в БД
+    mainform = Mainform(request.POST or default_data)                                   # HTML-форма правила модели Url
+    errors = {} # ошибки валидации формы и логики значений.                             # Формат: 'errors': { key: [ error ] }
+    msg = ''                                                                            # сообщение в лог            
+    # обработка и запись формы
+    if request.method == 'POST':
+        if mainform.is_valid():                                                         # учтена проверка субдомена          
+            url = mainform.save(commit=False)                                           # инициализация объекта Url
+            url.alias = '{}/{}'.format(mainform.cleaned_data['domain'], url.subpart)    # формирование короткой ссылки 
+            url.owner = owner                                                           # добавление пользователя
+            url.save()                                                                  # сохранение формы - запись объекта правила в БД
+            logger(owner, process, 'Создан объект правила с id: ' + str(url.id))        # запись лога в БД 
+            
+            url_col = Collection.objects.create(owner=get_owner(request), url=url)      # создание нового правила в БД-коллекцию пользователя
+            logger(owner, process, 
+                   'Создан объект коллекци правил с id: ' + str(url_col.id))            # запись лога в БД  
+            
+            savemsg = '{}'.format(url)                                                  # из метода __str__ модели  
+            mainform = Mainform(default_data)                                           # чистая форма после записи предыдущих данных
+        else:
+            errors = mainform.errors                                                    # ошибки валидации формы
+    # --- end of POST
+
+    # КЭШИРОВАНИЕ 
+    # выборка всех правил пользователя с сортирвкой по дате удаления 
+    if 'url' in cache and not url:                                                      # если не производилась запись объекта url в БД
+        url_query = cache.get('url')                                                    # ВЫБОРКА ИЗ КЭША
+        is_db_query = False
+        logger(owner, process, 'Создан кеш объектов правил.')
+        print('Создан кеш объектов правил\n')                                           # отладочный лог в консоль
+    else:
+        is_db_query = True
+        url_query = Url.objects.filter(
+            collection__in = Collection.objects.select_related('url').filter(
+                owner=owner)).order_by('expire_date')
+
+        results = [url.to_json() for url in url_query]
+        cache.set('url', results, timeout=CACHE_TTL)                                    # ЗАПИСЬ В КЭШ 
+
+        print('TTL: ' + str(cache.ttl('url')))                                          # TTL=300 по умолчанию    
+    # установка номера страницы для текущего отображения
+    page_number = request.GET.get('page') or page_number
+
+    # контекст HTML-страницы
+    context = {
+        'title': 'Сервис коротких ссылок', 'year': datetime.now().year,                 # загололвок HTML-страницы 
+        'mainform': mainform,
+        'savemsg': savemsg,
+        'errors': errors,
+        'url_query': url_query,                                                         # список всех правил пользователя
+        'page_obj': paginate(url_query, page_number, owner.trows_on_page),              # разбивка на страницы
+        'is_db_query': is_db_query,                                                     # Boolean источника выборки (БД/кеш) 
+    }
+    return render(request, 'app/index.html', context)
 
 '''
 def contact(request):

@@ -14,6 +14,10 @@ urlpatterns = [
     # from Django
     path('', views.home, name='home'),
     path('', include('app.urls')),
+]
+
+
+'''
     path('admin/', admin.site.urls),
     path('login/',
          LoginView.as_view
@@ -28,10 +32,6 @@ urlpatterns = [
          ),
          name='login'),
     path('logout/', LogoutView.as_view(next_page='/'), name='logout'),
-]
-
-
-'''
     path('contact/', views.contact, name='contact'),
     path('about/', views.about, name='about'),
 '''

@@ -40,10 +40,13 @@ class Url(models.Model):
         ''' Сведения об объекте модели в формате JSON. '''
         return {
             'id': self.id,
-            'link': self.full,
+            'link': self.link,
             'alias': self.alias,
             'owner': self.owner,
-        }
+            'subpart': self.subpart,
+            'str_limit': self.str_limit,
+            'expire_date': self.expire_date,
+        }    
 
 
 

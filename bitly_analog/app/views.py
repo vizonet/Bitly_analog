@@ -152,6 +152,35 @@ def ajax_check_subpart(request, sub_domain=None):
     return HttpResponse(json.dumps(result))
 
 
+def caching(request, owner, process, obj, cache_key, related_field, page_number=1):
+    ''' Кэширование выборки модели. Возвращает словарь контекста. '''
+    page_number = request.GET.get('page') or page_number                                # установка номера страницы для текущего отображения
+
+    # КЭШИРОВАНИЕ 
+    # выборка всех правил пользователя с сортирвкой по дате удаления 
+    if 'cache_key' in cache and not obj:                                                # если не производилась запись объекта url в БД
+        url_query = cache.get('cache_key')                                              # ВЫБОРКА ИЗ КЭША
+        is_db_query = False                                                             # флаг сообщения в контексте 
+        logger(owner, process, 'Создан кеш объектов правил Url.')
+    else:
+        is_db_query = True
+        url_query = Url.objects.filter(
+            collection__in = Collection.objects.select_related(related_field).filter(
+                owner=owner)).order_by('expire_date')
+
+        results = [url.to_json() for url in url_query]
+        cache.set('cache_key', results, timeout=CACHE_TTL)                              # ЗАПИСЬ В КЭШ 
+
+        print('TTL: ' + str(cache.ttl('url')))                                          # TTL=300 по умолчанию 
+    
+    return {
+        'url_query': url_query,                                                         # список всех правил пользователя
+        'is_db_query': is_db_query,                                                     # Boolean (из БД/кеш)
+        'page_obj': paginate(url_query, page_number, owner.trows_on_page),              # разбивка на страницы      
+    }
+    # ----- end of caching
+
+
 
 # ----- Периодические задачи
 
@@ -204,7 +233,7 @@ scheduller(clean_urls, 'периодическая очистка URL-прави
 
 # ----- Представления HTML-страниц 
 
-def home(request, page_number=1, onpage=3):
+def home(request):
     ''' Главная страница серсвиса. 
         Аргументы:
         request     (HttpRequest) -- объект HTTP-запроса
@@ -215,7 +244,7 @@ def home(request, page_number=1, onpage=3):
     url = None
     owner = get_owner(request)                                                          # инициализация пользователя
     process = get_fname(inspect.currentframe())                                         # имя текущей функции
-    
+
     # данные для начальной формы - срок жизни правила (в сутках)
     default_data = {'expire_date': datetime.now().date() + timedelta(days=owner.url_ttl)} 
     savemsg = ''                                                                        # сообщение о записи правила в БД
@@ -241,25 +270,7 @@ def home(request, page_number=1, onpage=3):
             errors = mainform.errors                                                    # ошибки валидации формы
     # --- end of POST
 
-    # КЭШИРОВАНИЕ 
-    # выборка всех правил пользователя с сортирвкой по дате удаления 
-    if 'url' in cache and not url:                                                      # если не производилась запись объекта url в БД
-        url_query = cache.get('url')                                                    # ВЫБОРКА ИЗ КЭША
-        is_db_query = False
-        logger(owner, process, 'Создан кеш объектов правил.')
-        print('Создан кеш объектов правил\n')                                           # отладочный лог в консоль
-    else:
-        is_db_query = True
-        url_query = Url.objects.filter(
-            collection__in = Collection.objects.select_related('url').filter(
-                owner=owner)).order_by('expire_date')
-
-        results = [url.to_json() for url in url_query]
-        cache.set('url', results, timeout=CACHE_TTL)                                    # ЗАПИСЬ В КЭШ 
-
-        print('TTL: ' + str(cache.ttl('url')))                                          # TTL=300 по умолчанию    
-    # установка номера страницы для текущего отображения
-    page_number = request.GET.get('page') or page_number
+    # was caching here
 
     # контекст HTML-страницы
     context = {
@@ -267,11 +278,12 @@ def home(request, page_number=1, onpage=3):
         'mainform': mainform,
         'savemsg': savemsg,
         'errors': errors,
-        'url_query': url_query,                                                         # список всех правил пользователя
-        'page_obj': paginate(url_query, page_number, owner.trows_on_page),              # разбивка на страницы
-        'is_db_query': is_db_query,                                                     # Boolean источника выборки (БД/кеш) 
     }
+
+    context.update(caching(request, owner, process, url, 'utl', 'utl'))                           # контекст кеширования
     return render(request, 'app/index.html', context)
+
+
 
 '''
 def contact(request):

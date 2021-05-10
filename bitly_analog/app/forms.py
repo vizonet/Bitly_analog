@@ -26,7 +26,7 @@ class Mainform(forms.ModelForm):
         ''' Проверка значения поля 'subpart' на дубликат в БД. 
             При наличии дубликата инициирует добавленную в стандартный набор form.errors ошибку. 
         '''
-        subpart = self.cleaned_data['subpart']  # значение поля 
+        subpart = self.cleaned_data['subpart']              # значение поля 
         if Url.objects.filter(subpart=subpart).exists():  
             self.add_error('subpart', 'Найден дубликат субдомена! Измените текущее значение.')
 
@@ -42,12 +42,3 @@ class BootstrapAuthenticationForm(AuthenticationForm):
                                widget=forms.PasswordInput({
                                    'class': 'form-control',
                                    'placeholder':'Password'}))
-
-
-
-# ----- Дополнительный функционал 
-
-def is_subpart_exists(request, sub_domain):
-    ''' Проверка на уникальность субдомена. Возвращает Boolean: True, если есть совпадения, иначе False. '''
-    return Url.objects.filter(subpart=sub_domain).exists()
-

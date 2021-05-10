@@ -111,10 +111,10 @@
 
 <section>
     <h2>
-        {% if rules_query %}
-            Таблица действующих правил (<span style="color: blue">{{page_obj.object_list.count}} из {{rules_query.count}}</span>):
+        {% if url_query %}
+            Таблица действующих правил (<span style="color: blue">{{page_obj.object_list.count}} из {{url_query.count}}</span>):
         {% else %}
-            У Вас в коллекции пока нет правил сокращения...
+            У Вас в коллекции пока нет правил...
         {% endif %}
     </h2>
     {% if page_obj.object_list %} 

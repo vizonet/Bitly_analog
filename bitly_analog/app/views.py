@@ -1,11 +1,9 @@
-"""
-Definition of views.
-"""
+""" Definition of views. """
+
 import json, time, threading, inspect
 
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect, Http404
-#from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError 
 from django.core.paginator import Paginator
 from datetime import datetime, timedelta
@@ -13,23 +11,26 @@ from datetime import datetime, timedelta
 from app.models import Session, Owner, Url, Collection, Log
 from app.forms import Mainform
 
-# rest api, cache
-from rest_framework.decorators import api_view
+# rest api
+from rest_framework import generics
 from rest_framework import status
+from rest_framework import viewsets
 from rest_framework.response import Response
+from .serializers import UrlSerializer
+# cache
 from django.core.cache import cache
 from django.core.cache.backends.base import DEFAULT_TIMEOUT
 from django.conf import settings
- 
+
 
 # ----- Глобальные переменные 
 DB_ERROR = 'Ошибка доступа к БД.'                                                       # ошибка при обращении к БД для записи лога
 UNKNOWN_NAME = 'UNKNOWN FUNCTION NAME'                                                  # ошибка установления процесса при записи лога 
 CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)                             # таймаут объектов кэша по умолчанию
 
-# ----- Общий функционал
 
-   
+# ----- Общий функционал
+            
 def logger(owner, process, exec_msg):
     ''' Создание записи в таблице логирования Log. 
         Аргументы:
@@ -171,7 +172,7 @@ def caching(request, owner, process, obj, cache_key, related_field, page_number=
         results = [url.to_json() for url in url_query]
         cache.set('cache_key', results, timeout=CACHE_TTL)                              # ЗАПИСЬ В КЭШ 
 
-        print('TTL: ' + str(cache.ttl('url')))                                          # TTL=300 по умолчанию 
+        #print('TTL: ' + str(cache.ttl('url')))                                         # TTL=300 по умолчанию # вывод в консоль для отладки  
     
     return {
         'url_query': url_query,                                                         # список всех правил пользователя
@@ -179,7 +180,6 @@ def caching(request, owner, process, obj, cache_key, related_field, page_number=
         'page_obj': paginate(url_query, page_number, owner.trows_on_page),              # разбивка на страницы      
     }
     # ----- end of caching
-
 
 
 # ----- Периодические задачи
@@ -270,45 +270,30 @@ def home(request):
             errors = mainform.errors                                                    # ошибки валидации формы
     # --- end of POST
 
-    # was caching here
+    # caching was here
 
-    # контекст HTML-страницы
+    # контекст HTML-страницы                                                             
     context = {
-        'title': 'Сервис коротких ссылок', 'year': datetime.now().year,                 # загололвок HTML-страницы 
+        'title': 'Сервис коротких ссылок', 'year': datetime.now().year,                 # заголовок страницы
         'mainform': mainform,
         'savemsg': savemsg,
         'errors': errors,
     }
 
-    context.update(caching(request, owner, process, url, 'utl', 'utl'))                           # контекст кеширования
+    context.update(caching(request, owner, process, url, 'cache_key', 'url'))           # контекст кеширования
     return render(request, 'app/index.html', context)
 
 
+# ----------- API
 
-'''
-def contact(request):
-    """Renders the contact page."""
-    assert isinstance(request, HttpRequest)
-    return render(
-        request,
-        'app/contact.html',
-        {
-            'title':'Contact',
-            'message':'Your contact page.',
-            'year':datetime.now().year,
-        }
-    )
+class UrlList(generics.ListAPIView):
+    ''' Возвращает все правила из БД. ''' 
+    queryset = Url.objects.all().order_by('expire_date')
+    serializer_class = UrlSerializer
 
-def about(request):
-    """Renders the about page."""
-    assert isinstance(request, HttpRequest)
-    return render(
-        request,
-        'app/about.html',
-        {
-            'title':'About',
-            'message':'Your application description page.',
-            'year':datetime.now().year,
-        }
-    )
-'''
+
+
+class UrlViewSet(viewsets.ModelViewSet):
+    ''' Возвращает все правила из БД. ''' 
+    queryset = Url.objects.all().order_by('expire_date')
+    serializer_class = UrlSerializer

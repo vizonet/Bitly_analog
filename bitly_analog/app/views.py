@@ -162,7 +162,7 @@ def caching(request, owner, process, obj, cache_key, related_field, page_number=
     if 'cache_key' in cache and not obj:                                                # если не производилась запись объекта url в БД
         url_query = cache.get('cache_key')                                              # ВЫБОРКА ИЗ КЭША
         is_db_query = False                                                             # флаг сообщения в контексте 
-        logger(owner, process, 'Создан кеш объектов правил Url.')
+        logger(owner, process, 'Создан кэш объектов правил Url.')
     else:
         is_db_query = True
         url_query = Url.objects.filter(
@@ -176,7 +176,7 @@ def caching(request, owner, process, obj, cache_key, related_field, page_number=
     
     return {
         'url_query': url_query,                                                         # список всех правил пользователя
-        'is_db_query': is_db_query,                                                     # Boolean (из БД/кеш)
+        'is_db_query': is_db_query,                                                     # Boolean (выборка из БД->True / из кэша->False)
         'page_obj': paginate(url_query, page_number, owner.trows_on_page),              # разбивка на страницы      
     }
     # ----- end of caching
@@ -204,7 +204,7 @@ def clean_urls(*args):
             query.delete()                                                              # удаление правил с соответствующей датой
         finally:
             logger(None, get_fname(inspect.currentframe()), msg)                        # запись лога в БД  
-        # очистка правил в кеше
+        # очистка правил в кэше
         time.sleep(delay)                                                               # останов задачи на период
      
 
@@ -280,7 +280,7 @@ def home(request):
         'errors': errors,
     }
 
-    context.update(caching(request, owner, process, url, 'cache_key', 'url'))           # контекст кеширования
+    context.update(caching(request, owner, process, url, 'cache_key', 'url'))           # контекст кэширования
     return render(request, 'app/index.html', context)
 
 

@@ -113,7 +113,7 @@
     {% if url_query %}
         <div class="row col-xs-12" style="display: flex; align-items: baseline;">
             <h2>Таблица действующих правил (<span style="color: blue">{{page_obj.object_list|length }} из {{url_query|length}}</span>):&nbsp;</h2>
-            <span style="color: {% if is_db_query %}green;{% else %}red{% endif %}">Выборка {% if is_db_query %}из БД{% else %}из кеша{% endif %}</span>
+            <span style="color: {% if is_db_query %}green;{% else %}red{% endif %}">Выборка {% if is_db_query %}из БД{% else %}из кэша{% endif %}</span>
         </div>
     {% else %}
         <h2>У Вас в коллекции пока нет правил...</h2>

@@ -2,8 +2,8 @@
 
 ## Приложение работает через одностраничную форму с использованием баз данных MySQL и REDIS.
 
-## Вызовы по API (/domain:port/ - адрес приложения на хостинг-сервере):
+## Вызовы по API (/host:port/ - адрес приложения на хостинг-сервере):
 
 ## Просмотр всех правил сокращения ссылок из базы данных: 
-* URL: https://domain:port/urls_list/
-* URL: https://domain:port/urls/
+* URL: https://host:port/urls_list/
+* URL: https://host:port/urls/

@@ -36,8 +36,17 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="app\api.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="app\forms.py" />
     <Compile Include="app\models.py" />
+    <Compile Include="app\common.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="app\periodic_tasks.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="app\serializers.py">
       <SubType>Code</SubType>
     </Compile>

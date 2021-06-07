@@ -30,15 +30,15 @@ ALLOWED_HOSTS = ['*']   # 'localhost', '127.0.0.1'
 # Application references
 # https://docs.djangoproject.com/en/2.1/ref/settings/#std:setting-INSTALLED_APPS
 INSTALLED_APPS = [
-    'app',
-    'rest_framework',
-    # Add your apps here to enable them
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # Add your apps here to enable them
+    'app',
+    'rest_framework',
 ]
 
 # Middleware framework
@@ -79,6 +79,13 @@ WSGI_APPLICATION = 'bitly_analog.wsgi.application'
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 DATABASES = {
     'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    }
+}
+
+'''
+{
         # MySQL engine. Powered by the mysqlclient module.
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'bitly_analog',
@@ -87,7 +94,7 @@ DATABASES = {
         'HOST': 'localhost',
         'PORT': '3306',
     }
-}
+'''
 
 CACHES = { 
     'default': {

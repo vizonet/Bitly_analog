@@ -17,9 +17,9 @@ from django.core.cache.backends.base import DEFAULT_TIMEOUT
 from django.conf import settings
 
 # модули
-from app.common import logger, is_subpart_exists, get_owner, get_fname, paginate, redirect_to, ajax_check_subpart, caching 
-from app.periodic_tasks import clean_urls, scheduller
-from app.api import UrlList, UrlViewSet
+from app.common import * # logger, is_subpart_exists, get_owner, get_fname, paginate, redirect_to, ajax_check_subpart, caching 
+from app.periodic_tasks import * # clean_urls, scheduller
+from app.api import * # UrlList, UrlViewSet
 
 # ----- Глобальные переменные 
 DB_ERROR = 'Ошибка доступа к БД.'                                                       # ошибка при обращении к БД для записи лога

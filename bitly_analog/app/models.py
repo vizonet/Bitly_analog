@@ -29,7 +29,6 @@ class Url(models.Model):
     str_limit = models.PositiveSmallIntegerField('Число первых символов отображения оригинального URL в методе __str__', default=40)
     owner = models.ForeignKey(Owner, on_delete=models.CASCADE)                                  # связь с таблицой пользователей Owner 
 
-
     def __str__(self):
         ''' Строковое представление модели. ''' 
         return str(self.owner) + ' | алиас: <' + self.alias + '> | URL: <' + self.link[:self.str_limit] \
@@ -67,7 +66,6 @@ class Log(models.Model):
     owner = models.ForeignKey(Owner, null=True, on_delete=models.SET_NULL)                      # связь с таблицой пользователей Owner
     process = models.CharField('Имя процесса', max_length=100)
     execute = models.TextField('Что выполнено')
-
 
     def __str__(self):
         ''' Строковое представление модели. ''' 

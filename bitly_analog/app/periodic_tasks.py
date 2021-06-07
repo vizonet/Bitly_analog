@@ -1,7 +1,9 @@
 # ----- Периодические задачи
 
 import threading, inspect
+from datetime import datetime, timedelta
 from app.common import logger, get_fname
+from app.models import Url
 
 def clean_urls(*args):                                                                      
     ''' Очистка в БД записей правил модели 'Url' с наступившей датой удаления 'expire_date'. 

@@ -1,9 +1,22 @@
 # ----- Общий функционал
 
-from app.models import Log
+import json, inspect
+from django.conf import settings
+from django.http import HttpRequest, HttpResponse
+from django.shortcuts import render, redirect, Http404
+from django.core.paginator import Paginator
+
+from .models import Url, Log, Session, Owner, Collection
+
+# cache
+from django.core.cache import cache
+from django.core.cache.backends.base import DEFAULT_TIMEOUT
+
 
 # ----- Глобальные переменные 
 UNKNOWN_NAME = 'UNKNOWN FUNCTION NAME'                                                  # ошибка установления процесса при записи лога 
+CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)                             # таймаут объектов кэша по умолчанию
+
             
 def logger(owner, process, exec_msg):
     ''' Создание записи в таблице логирования Log. 
@@ -45,7 +58,7 @@ def get_owner(request):
         request.session.create()                                                        # создание сессии для нового пользователя
     try:
         # извлеченние пользователя или создание нового
-        result  = Owner.objects.get_or_create(session = Session.objects.get(session_key = request.session.session_key))
+        result = Owner.objects.get_or_create(session = Session.objects.get(session_key = request.session.session_key))
     except IntegrityError:
         owner = None
         msg = DB_ERROR

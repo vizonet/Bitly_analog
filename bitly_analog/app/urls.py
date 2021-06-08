@@ -14,6 +14,6 @@ urlpatterns = [
     path('', include(router.urls)),
     #path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),                     # кнопка 'log in'
     path('urls_list/', views.UrlList.as_view()),                                                        # на основе класса ListAPIView
-    path('short/'), views,  
+    # api # path('short/'), views,  
 ]
 

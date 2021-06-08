@@ -1,29 +1,22 @@
 """ Definition of views. """
 
-import json, time, threading, inspect
+import threading, inspect
 
-from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render, redirect, Http404
+from django.http import HttpRequest
+from django.shortcuts import render, redirect
 from django.db import IntegrityError 
-from django.core.paginator import Paginator
 from datetime import datetime, timedelta
 
-from app.models import Log, Session, Owner, Url, Collection
-from app.forms import Mainform
-
-# cache
-from django.core.cache import cache
-from django.core.cache.backends.base import DEFAULT_TIMEOUT
-from django.conf import settings
+from .models import Log, Session, Owner, Url, Collection
+from .forms import Mainform
 
 # модули
-from app.common import logger, is_subpart_exists, get_owner, get_fname, paginate, redirect_to, ajax_check_subpart, caching 
-from app.periodic_tasks import clean_urls, scheduller
-from app.api import UrlList, UrlViewSet
+from .common import logger, is_subpart_exists, get_owner, get_fname, paginate, redirect_to, ajax_check_subpart, caching 
+from .periodic_tasks import clean_urls, scheduller
+from .api import UrlList, UrlViewSet
 
 # ----- Глобальные переменные 
 DB_ERROR = 'Ошибка доступа к БД.'                                                       # ошибка при обращении к БД для записи лога
-CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)                             # таймаут объектов кэша по умолчанию
 
 # запуск задачи clean_rules после запуска проекта на host-сервере
 scheduller(clean_urls, 'периодическая очистка URL-правил в БД')
